@@ -1268,10 +1268,10 @@ input:checked + .slider:before {
 }
 
 /* -----------------------------------------------------------------------
-   CLIENT VIEW — sidebar au-dessus, carte en dessous
+   CLIENT VIEW — plein écran sur mobile, carte cachée par défaut
    ----------------------------------------------------------------------- */
 @media (max-width: 768px) {
-  /* Hauteur normale (header visible) */
+
   .client-layout {
     flex-direction: column;
     height: calc(100dvh - 95px);
@@ -1279,54 +1279,63 @@ input:checked + .slider:before {
     transition: height 0.3s ease;
   }
 
-  /* Quand le header est caché, la layout prend tout l'écran */
   body.header-is-hidden .client-layout {
     height: 100dvh;
   }
 
-  /* Sidebar : recherche fixe en haut + liste scrollable */
+  /* Sidebar prend TOUTE la hauteur — pas de carte visible par défaut */
   .sidebar {
     width: 100%;
-    height: 65vh;
-    max-height: 65vh;
-    min-height: 200px;
+    height: 100%;
+    max-height: 100%;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     border-right: none;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: none;
     box-shadow: none;
     flex-shrink: 0;
-    transition: height 0.3s ease, max-height 0.3s ease;
   }
 
-  /* Quand header caché → sidebar plus haute */
-  body.header-is-hidden .sidebar {
-    height: 70vh;
-    max-height: 70vh;
+  /* Carte : cachée par défaut, visible seulement si .map-visible */
+  .map-container {
+    display: none;
+    height: 50vh;
+    flex-shrink: 0;
   }
 
+  .map-container.map-visible {
+    display: block;
+  }
+
+  /* Quand la carte est visible, la sidebar se réduit */
+  .sidebar.map-visible-sibling {
+    height: 50%;
+    max-height: 50%;
+  }
+
+  #leaflet-map { height: 100%; }
+
+  /* Zone filtres compacte */
   .search-section {
     flex-shrink: 0;
-    padding: 0.75rem 1rem;
-    gap: 0.5rem;
+    padding: 0.65rem 1rem 0.5rem;
+    gap: 0.4rem;
+    border-bottom: 1px solid var(--border-color);
   }
 
-  .search-title { font-size: 0.9rem; }
+  .search-title { font-size: 0.88rem; }
 
   .search-input {
     font-size: 0.85rem;
-    padding: 0.6rem 0.75rem 0.6rem 2.2rem;
+    padding: 0.55rem 0.7rem 0.55rem 2rem;
   }
 
-  .search-btn {
-    padding: 0 0.85rem;
-    font-size: 0.85rem;
-  }
+  .search-btn { padding: 0 0.8rem; font-size: 0.85rem; }
 
-  .filter-group { gap: 0.3rem; }
-  .filter-label { font-size: 0.82rem; }
-  .day-chip { padding: 0.3rem 0.65rem; font-size: 0.75rem; }
+  .filter-group { gap: 0.25rem; }
+  .filter-label { font-size: 0.8rem; }
+  .day-chip { padding: 0.28rem 0.6rem; font-size: 0.73rem; }
 
   /* Liste résultats : scrollable, prend tout l'espace restant */
   .results-section {
@@ -1334,10 +1343,10 @@ input:checked + .slider:before {
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 0.75rem 1rem;
+    padding: 0.7rem 0.9rem;
   }
 
-  .results-header { font-size: 0.78rem; margin-bottom: 0.5rem; }
+  .results-header { font-size: 0.76rem; margin-bottom: 0.5rem; }
 
   .truck-list { gap: 0.6rem; }
   .truck-card-image { height: 85px; }
@@ -1346,17 +1355,49 @@ input:checked + .slider:before {
   .truck-card-desc { font-size: 0.8rem; margin-bottom: 0.4rem; }
   .truck-card-meta { font-size: 0.75rem; padding-top: 0.4rem; }
 
-  /* Carte : reste de l'écran */
-  .map-container { flex: 1; min-height: 120px; }
-  #leaflet-map { height: 100%; }
+  /* Bouton toggle carte */
+  .map-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    width: calc(100% - 1.8rem);
+    margin: 0.5rem 0.9rem 0;
+    padding: 0.55rem;
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 0.6rem;
+    color: var(--primary);
+    font-family: var(--font-main);
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
 }
 
 @media (max-width: 480px) {
   .client-layout { height: calc(100dvh - 105px); }
   body.header-is-hidden .client-layout { height: 100dvh; }
-  .sidebar { height: 68vh; max-height: 68vh; }
-  body.header-is-hidden .sidebar { height: 72vh; max-height: 72vh; }
   .truck-card-image { height: 75px; }
+
+  /* Bouton carte non affiché sur très petit écran — la carte reste accessible via popup */
+  .map-toggle-btn { font-size: 0.75rem; padding: 0.45rem; }
+}
+
+/* Desktop : bouton toggle carte caché, carte toujours visible */
+@media (min-width: 769px) {
+  .map-toggle-btn { display: none; }
+  .map-container {
+    display: block !important;
+    flex: 1;
+    height: 100%;
+  }
+  .sidebar {
+    width: 420px;
+    height: 100%;
+    max-height: 100%;
+  }
 }
 
 /* -----------------------------------------------------------------------
