@@ -144,24 +144,43 @@ function showToast(message, type = "success") {
 function initClientMap() {
   if (clientMap) return;
 
+  const mapEl = document.getElementById("leaflet-map");
+  if (!mapEl) return;
+
+  // Si le conteneur n'a pas encore de taille, on attend qu'il en ait une
+  const rect = mapEl.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) {
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          ro.disconnect();
+          initClientMap();
+        }
+      }
+    });
+    ro.observe(mapEl);
+    return;
+  }
+
   clientMap = L.map("leaflet-map", {
     zoomControl: false
   }).setView([clientSearchCoords.lat, clientSearchCoords.lng], 13);
 
-  // Add zoom control at bottom-right
   L.control.zoom({ position: 'bottomright' }).addTo(clientMap);
 
-  // Dark/Sleek theme tile layer (CartoDB Dark Matter)
   L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
     subdomains: 'abcd',
     maxZoom: 20
   }).addTo(clientMap);
 
-  // Click on client map to set search location
   clientMap.on("click", (e) => {
     setClientSearchLocation(e.latlng.lat, e.latlng.lng, "Position sélectionnée sur la carte");
   });
+
+  // Force le recalcul de taille après init
+  setTimeout(() => clientMap.invalidateSize({ animate: false }), 50);
+  setTimeout(() => clientMap.invalidateSize({ animate: false }), 300);
 }
 
 function initModalMap() {
@@ -1192,12 +1211,10 @@ window.switchTab = function(tabName) {
     document.getElementById("view-client").classList.add("active");
     document.getElementById("tab-client").classList.add("active");
     
-    // Initialise et force le recalcul de taille de la carte
+    // Invalidate Leaflet map size (crucial since it was hidden)
     setTimeout(() => {
       initClientMap();
-      // Double invalidateSize pour garantir le rendu correct
-      clientMap.invalidateSize({ animate: false });
-      setTimeout(() => clientMap.invalidateSize({ animate: false }), 200);
+      clientMap.invalidateSize();
       renderClientResults();
     }, 100);
 
