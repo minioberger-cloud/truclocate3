@@ -1408,36 +1408,64 @@ window.addEventListener("appinstalled", () => {
   const THRESHOLD = 30;
   const header = document.querySelector("header") || document.getElementsByTagName("header")[0];
 
-  function handleScroll(e) {
-    if (window.innerWidth > 768) return;
-    const el = e.target;
-    const y = el.scrollTop;
+  function getBtn() { return document.getElementById("map-toggle-btn"); }
 
-    if (y > lastY && y > THRESHOLD) {
+  function hideUI() {
+    if (header) {
       header.style.transform = "translateY(-100%)";
       header.style.opacity = "0";
       header.style.pointerEvents = "none";
-    } else if (y < lastY - 5 || y <= THRESHOLD) {
+    }
+    const btn = getBtn();
+    if (btn) {
+      btn.style.transform = "translateY(-8px)";
+      btn.style.opacity = "0";
+      btn.style.pointerEvents = "none";
+      btn.style.marginTop = "0";
+      btn.style.height = "0";
+      btn.style.overflow = "hidden";
+      btn.style.padding = "0";
+    }
+  }
+
+  function showUI() {
+    if (header) {
       header.style.transform = "";
       header.style.opacity = "";
       header.style.pointerEvents = "";
     }
+    const btn = getBtn();
+    if (btn) {
+      btn.style.transform = "";
+      btn.style.opacity = "";
+      btn.style.pointerEvents = "";
+      btn.style.height = "";
+      btn.style.overflow = "";
+      btn.style.padding = "";
+      btn.style.marginTop = "";
+    }
+  }
+
+  function handleScroll(e) {
+    if (window.innerWidth > 768) return;
+    const y = e.target.scrollTop;
+
+    if (y > lastY && y > THRESHOLD) {
+      hideUI();
+    } else if (y < lastY - 5 || y <= THRESHOLD) {
+      showUI();
+    }
     lastY = y;
   }
 
-  // Délégation : on écoute tous les scrolls sur document et on filtre .results-section
   document.addEventListener("scroll", function(e) {
     if (e.target && e.target.classList && e.target.classList.contains("results-section")) {
       handleScroll(e);
     }
-  }, true); // capture phase pour attraper les scrolls sur éléments enfants
+  }, true);
 
-  // Réaffiche le header au changement d'onglet
   window.addEventListener("tabChanged", () => {
-    if (!header) return;
-    header.style.transform = "";
-    header.style.opacity = "";
-    header.style.pointerEvents = "";
+    showUI();
     lastY = 0;
   });
 })();
