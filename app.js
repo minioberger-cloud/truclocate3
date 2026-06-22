@@ -1,24 +1,7 @@
 // ==========================================================================
-// FIREBASE — Firestore
-// ==========================================================================
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, onSnapshot }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const _fbApp = initializeApp({
-  apiKey:            "AIzaSyAxV7HqiF3IEDY5SnHgBBWLvbgc8xqJ3rg",
-  authDomain:        "trucklocate-2e5ee.firebaseapp.com",
-  projectId:         "trucklocate-2e5ee",
-  storageBucket:     "trucklocate-2e5ee.firebasestorage.app",
-  messagingSenderId: "419821613849",
-  appId:             "1:419821613849:web:c13b6339e6c0ae284bcb88"
-});
-const _db         = getFirestore(_fbApp);
-const _vendorsCol = collection(_db, "vendors");
-
-// ==========================================================================
 // STATE
 // ==========================================================================
+
 let vendors = [];
 let currentUser = null;
 let clientSearchCoords = { lat: 48.8566, lng: 2.3522 };
@@ -30,50 +13,70 @@ let clientMap = null, modalMap = null, modalMarker = null, activeModalDay = null
 
 const DAYS_OF_WEEK = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
-// --- Chargement initial ---
+// ---------- Helpers localStorage (cache hors-ligne) ----------
+function _cacheVendors() {
+  localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
+}
+function _loadCached() {
+  const s = localStorage.getItem("foodtruck_vendors");
+  return s ? JSON.parse(s) : (window.INITIAL_VENDORS || []);
+}
+
+// ---------- Chargement initial depuis Firestore ----------
 async function initDatabase() {
   try {
-    const snap = await getDocs(_vendorsCol);
+    const snap = await window._vendorsCol.get();
     if (snap.empty) {
+      // Première utilisation : seeder depuis mockData
       vendors = window.INITIAL_VENDORS || [];
-      for (const v of vendors) await setDoc(doc(_db, "vendors", v.id), v);
+      for (const v of vendors) {
+        await window._vendorsCol.doc(v.id).set(v);
+      }
     } else {
       vendors = snap.docs.map(d => d.data());
     }
-    localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
+    _cacheVendors();
+    console.log("[FB] Chargé", vendors.length, "vendors depuis Firestore");
   } catch (e) {
-    console.warn("[FB] initDatabase:", e);
-    const s = localStorage.getItem("foodtruck_vendors");
-    vendors = s ? JSON.parse(s) : (window.INITIAL_VENDORS || []);
+    console.warn("[FB] Erreur Firestore, fallback cache local :", e);
+    vendors = _loadCached();
   }
 }
 
-// --- Écoute temps réel ---
+// ---------- Écoute temps réel ----------
 function listenVendors() {
-  onSnapshot(_vendorsCol, snap => {
+  window._vendorsCol.onSnapshot(snap => {
     vendors = snap.docs.map(d => d.data());
-    localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
+    _cacheVendors();
     if (document.getElementById("view-client")?.classList.contains("active")) renderClientResults();
     if (document.getElementById("view-admin")?.classList.contains("active"))  renderAdminVendors();
   }, e => console.warn("[FB] onSnapshot:", e));
 }
 
-// --- Sauvegarde d'un vendor ---
+// ---------- Sauvegarde d'un seul vendor ----------
 async function saveVendor(v) {
-  try { await setDoc(doc(_db, "vendors", v.id), v); } catch(e) { console.warn("[FB] saveVendor:", e); }
-  localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
+  try {
+    await window._vendorsCol.doc(v.id).set(v);
+    _cacheVendors();
+  } catch(e) { console.warn("[FB] saveVendor:", e); }
 }
 
-// --- Sauvegarde de tous les vendors (compatibilité) ---
+// ---------- Sauvegarde de tous (compatibilité) ----------
 async function saveVendors() {
-  try { for (const v of vendors) await setDoc(doc(_db, "vendors", v.id), v); } catch(e) { console.warn("[FB] saveVendors:", e); }
-  localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
+  try {
+    const batch = window._db.batch();
+    vendors.forEach(v => batch.set(window._vendorsCol.doc(v.id), v));
+    await batch.commit();
+    _cacheVendors();
+  } catch(e) { console.warn("[FB] saveVendors:", e); }
 }
 
-// --- Suppression ---
+// ---------- Suppression ----------
 async function deleteVendorFromDB(id) {
-  try { await deleteDoc(doc(_db, "vendors", id)); } catch(e) { console.warn("[FB] delete:", e); }
-  localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
+  try {
+    await window._vendorsCol.doc(id).delete();
+    _cacheVendors();
+  } catch(e) { console.warn("[FB] delete:", e); }
 }
 
 // Get day name in French
