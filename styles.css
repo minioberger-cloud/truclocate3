@@ -1261,30 +1261,27 @@ input:checked + .slider:before {
     min-height: 0;
     flex-direction: column;
   }
-
-  .view-panel {
-    min-height: 0;
-  }
+  .view-panel { min-height: 0; }
 }
 
 /* -----------------------------------------------------------------------
    CLIENT VIEW — sidebar au-dessus, carte en dessous
    ----------------------------------------------------------------------- */
 @media (max-width: 768px) {
-  /* Layout vertical : sidebar + carte empilées, hauteur totale de l'écran */
+  /* Le header mobile fait ~95px (logo+nav sur 2 lignes) */
   .client-layout {
     flex-direction: column;
-    height: calc(100dvh - 110px);
+    height: calc(100dvh - 95px);
     overflow: hidden;
   }
 
-  /* Sidebar : hauteur fixe avec scroll interne sur la liste */
+  /* Sidebar : contient la recherche (fixe) + liste (scrollable) */
   .sidebar {
     width: 100%;
-    height: 55vh;          /* hauteur fixe — assez pour voir plusieurs cards */
-    max-height: 55vh;
+    height: 65vh;
+    max-height: 65vh;
     min-height: 200px;
-    overflow: hidden;       /* pas de scroll global sur la sidebar */
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     border-right: none;
@@ -1293,59 +1290,73 @@ input:checked + .slider:before {
     flex-shrink: 0;
   }
 
+  /* Zone filtres : compacte et fixe, ne scrolle pas */
   .search-section {
-    flex-shrink: 0;         /* la zone recherche ne rétrécit pas */
-    padding: 0.85rem 1rem;
-    gap: 0.65rem;
+    flex-shrink: 0;
+    padding: 0.65rem 1rem;
+    gap: 0.4rem;
+    border-bottom: 1px solid var(--border-color);
   }
 
-  .search-title { font-size: 0.95rem; }
+  .search-title { font-size: 0.88rem; }
 
   .search-input {
-    font-size: 0.85rem;
-    padding: 0.65rem 0.75rem 0.65rem 2.2rem;
+    font-size: 0.83rem;
+    padding: 0.55rem 0.7rem 0.55rem 2rem;
   }
 
   .search-btn {
-    padding: 0 0.85rem;
-    font-size: 0.85rem;
+    padding: 0 0.8rem;
+    font-size: 0.83rem;
   }
 
-  /* La liste de résultats prend tout l'espace restant et scrolle */
+  .filter-group { gap: 0.25rem; }
+  .filter-label { font-size: 0.8rem; }
+
+  .day-selector-container { gap: 0.25rem; }
+  .day-chip {
+    padding: 0.28rem 0.6rem;
+    font-size: 0.73rem;
+  }
+
+  /* Liste résultats : scrollable, prend tout l'espace restant */
   .results-section {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
-    padding: 0.85rem 1rem;
-    -webkit-overflow-scrolling: touch; /* scroll fluide iOS */
+    -webkit-overflow-scrolling: touch;
+    padding: 0.7rem 0.85rem;
   }
 
-  .results-header { margin-bottom: 0.6rem; }
+  .results-header {
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
 
-  /* Carte : prend le reste de l'écran */
+  .truck-list { gap: 0.55rem; }
+
+  .truck-card-image { height: 80px; }
+  .truck-card-content { padding: 0.6rem; }
+  .truck-card-title { font-size: 0.92rem; }
+  .truck-card-desc {
+    font-size: 0.78rem;
+    margin-bottom: 0.4rem;
+    -webkit-line-clamp: 1;
+  }
+  .truck-card-meta { font-size: 0.73rem; padding-top: 0.4rem; }
+
+  /* Carte : reste de l'écran */
   .map-container {
     flex: 1;
-    min-height: 200px;
-    flex-shrink: 0;
+    min-height: 120px;
   }
-
   #leaflet-map { height: 100%; }
-
-  /* Cards en liste simple */
-  .truck-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
-  }
-
-  .truck-card-image { height: 95px; }
-  .truck-card-title { font-size: 1rem; }
-  .truck-card-content { padding: 0.75rem; }
 }
 
 @media (max-width: 480px) {
-  .client-layout { height: calc(100dvh - 120px); }
-  .sidebar { height: 58vh; max-height: 58vh; }
-  .truck-card-image { height: 80px; }
+  .client-layout { height: calc(100dvh - 105px); }
+  .sidebar { height: 68vh; max-height: 68vh; }
+  .truck-card-image { height: 70px; }
 }
 
 /* -----------------------------------------------------------------------
