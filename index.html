@@ -877,25 +877,11 @@
   <!-- Leaflet Javascript for Maps -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-  <!-- Firebase CDN (compat mode — pas besoin de type=module) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script>
-    firebase.initializeApp({
-      apiKey:            "AIzaSyAxV7HqiF3IEDY5SnHgBBWLvbgc8xqJ3rg",
-      authDomain:        "trucklocate-2e5ee.firebaseapp.com",
-      projectId:         "trucklocate-2e5ee",
-      storageBucket:     "trucklocate-2e5ee.firebasestorage.app",
-      messagingSenderId: "419821613849",
-      appId:             "1:419821613849:web:c13b6339e6c0ae284bcb88"
-    });
-    window._db         = firebase.firestore();
-    window._vendorsCol = window._db.collection("vendors");
-  </script>
-
-  <!-- App JS scripts -->
+  <!-- mockData (variables globales) -->
   <script src="mockData.js"></script>
-  <script src="app.js"></script>
+
+  <!-- App principal en module (Firebase ES modules) -->
+  <script type="module" src="app.js"></script>
 
 </body>
 </html>
