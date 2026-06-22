@@ -1204,13 +1204,20 @@ input:checked + .slider:before {
    ========================================================================== */
 
 /* -----------------------------------------------------------------------
-   HEADER
+   HEADER — se cache au scroll vers le bas sur mobile
    ----------------------------------------------------------------------- */
 @media (max-width: 768px) {
   header {
     padding: 0.6rem 1rem;
     flex-wrap: wrap;
     gap: 0.4rem;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  header.header-hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
   }
 
   .logo-text { font-size: 1.1rem; }
@@ -1221,7 +1228,6 @@ input:checked + .slider:before {
     font-size: 1.1rem;
   }
 
-  /* Nav scrollable horizontalement, pleine largeur */
   .nav-tabs {
     order: 3;
     width: 100%;
@@ -1241,15 +1247,8 @@ input:checked + .slider:before {
     gap: 0.3rem;
   }
 
-  .user-badge {
-    font-size: 0.78rem;
-    gap: 0.4rem;
-  }
-
-  .logout-btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-  }
+  .user-badge { font-size: 0.78rem; gap: 0.4rem; }
+  .logout-btn { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
 }
 
 /* -----------------------------------------------------------------------
@@ -1261,21 +1260,30 @@ input:checked + .slider:before {
     min-height: 0;
     flex-direction: column;
   }
-  .view-panel { min-height: 0; }
+
+  .view-panel {
+    min-height: 0;
+  }
 }
 
 /* -----------------------------------------------------------------------
    CLIENT VIEW — sidebar au-dessus, carte en dessous
    ----------------------------------------------------------------------- */
 @media (max-width: 768px) {
-  /* Le header mobile fait ~95px (logo+nav sur 2 lignes) */
+  /* Hauteur normale (header visible) */
   .client-layout {
     flex-direction: column;
     height: calc(100dvh - 95px);
     overflow: hidden;
+    transition: height 0.3s ease;
   }
 
-  /* Sidebar : contient la recherche (fixe) + liste (scrollable) */
+  /* Quand le header est caché, la layout prend tout l'écran */
+  body.header-is-hidden .client-layout {
+    height: 100dvh;
+  }
+
+  /* Sidebar : recherche fixe en haut + liste scrollable */
   .sidebar {
     width: 100%;
     height: 65vh;
@@ -1288,36 +1296,36 @@ input:checked + .slider:before {
     border-bottom: 1px solid var(--border-color);
     box-shadow: none;
     flex-shrink: 0;
+    transition: height 0.3s ease, max-height 0.3s ease;
   }
 
-  /* Zone filtres : compacte et fixe, ne scrolle pas */
+  /* Quand header caché → sidebar plus haute */
+  body.header-is-hidden .sidebar {
+    height: 70vh;
+    max-height: 70vh;
+  }
+
   .search-section {
     flex-shrink: 0;
-    padding: 0.65rem 1rem;
-    gap: 0.4rem;
-    border-bottom: 1px solid var(--border-color);
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
   }
 
-  .search-title { font-size: 0.88rem; }
+  .search-title { font-size: 0.9rem; }
 
   .search-input {
-    font-size: 0.83rem;
-    padding: 0.55rem 0.7rem 0.55rem 2rem;
+    font-size: 0.85rem;
+    padding: 0.6rem 0.75rem 0.6rem 2.2rem;
   }
 
   .search-btn {
-    padding: 0 0.8rem;
-    font-size: 0.83rem;
+    padding: 0 0.85rem;
+    font-size: 0.85rem;
   }
 
-  .filter-group { gap: 0.25rem; }
-  .filter-label { font-size: 0.8rem; }
-
-  .day-selector-container { gap: 0.25rem; }
-  .day-chip {
-    padding: 0.28rem 0.6rem;
-    font-size: 0.73rem;
-  }
+  .filter-group { gap: 0.3rem; }
+  .filter-label { font-size: 0.82rem; }
+  .day-chip { padding: 0.3rem 0.65rem; font-size: 0.75rem; }
 
   /* Liste résultats : scrollable, prend tout l'espace restant */
   .results-section {
@@ -1325,38 +1333,29 @@ input:checked + .slider:before {
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 0.7rem 0.85rem;
+    padding: 0.75rem 1rem;
   }
 
-  .results-header {
-    font-size: 0.75rem;
-    margin-bottom: 0.5rem;
-  }
+  .results-header { font-size: 0.78rem; margin-bottom: 0.5rem; }
 
-  .truck-list { gap: 0.55rem; }
-
-  .truck-card-image { height: 80px; }
-  .truck-card-content { padding: 0.6rem; }
-  .truck-card-title { font-size: 0.92rem; }
-  .truck-card-desc {
-    font-size: 0.78rem;
-    margin-bottom: 0.4rem;
-    -webkit-line-clamp: 1;
-  }
-  .truck-card-meta { font-size: 0.73rem; padding-top: 0.4rem; }
+  .truck-list { gap: 0.6rem; }
+  .truck-card-image { height: 85px; }
+  .truck-card-content { padding: 0.65rem; }
+  .truck-card-title { font-size: 0.95rem; }
+  .truck-card-desc { font-size: 0.8rem; margin-bottom: 0.4rem; }
+  .truck-card-meta { font-size: 0.75rem; padding-top: 0.4rem; }
 
   /* Carte : reste de l'écran */
-  .map-container {
-    flex: 1;
-    min-height: 120px;
-  }
+  .map-container { flex: 1; min-height: 120px; }
   #leaflet-map { height: 100%; }
 }
 
 @media (max-width: 480px) {
   .client-layout { height: calc(100dvh - 105px); }
+  body.header-is-hidden .client-layout { height: 100dvh; }
   .sidebar { height: 68vh; max-height: 68vh; }
-  .truck-card-image { height: 70px; }
+  body.header-is-hidden .sidebar { height: 72vh; max-height: 72vh; }
+  .truck-card-image { height: 75px; }
 }
 
 /* -----------------------------------------------------------------------
