@@ -1,25 +1,25 @@
 // ==========================================================================
-// FIREBASE 12.15.0 — Firestore
+// FIREBASE 12.15.0
 // ==========================================================================
-import { initializeApp }    from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
 import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, writeBatch }
   from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-const _firebaseApp = initializeApp({
-  apiKey:            "AIzaSyAxV7HqiF3IEDY5SnHgBBWLvbgc8xqJ3rg",
-  authDomain:        "trucklocate-2e5ee.firebaseapp.com",
-  projectId:         "trucklocate-2e5ee",
-  storageBucket:     "trucklocate-2e5ee.firebasestorage.app",
+const _fbApp = initializeApp({
+  apiKey: "AIzaSyAxV7HqiF3IEDY5SnHgBBWLvbgc8xqJ3rg",
+  authDomain: "trucklocate-2e5ee.firebaseapp.com",
+  projectId: "trucklocate-2e5ee",
+  storageBucket: "trucklocate-2e5ee.firebasestorage.app",
   messagingSenderId: "419821613849",
-  appId:             "1:419821613849:web:c13b6339e6c0ae284bcb88"
+  appId: "1:419821613849:web:c13b6339e6c0ae284bcb88"
 });
-
-const _db         = getFirestore(_firebaseApp);
-const _vendorsCol = collection(_db, "vendors");
+const _db = getFirestore(_fbApp);
+const _col = collection(_db, "vendors");
 
 // ==========================================================================
-// STATE
+// STATE MANAGEMENT
 // ==========================================================================
+
 let vendors = [];
 let currentUser = null;
 let clientSearchCoords = { lat: 48.8566, lng: 2.3522 };
@@ -31,60 +31,48 @@ let clientMap = null, modalMap = null, modalMarker = null, activeModalDay = null
 
 const DAYS_OF_WEEK = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
-// --- Cache local (hors-ligne) ---
 function _cache() { localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors)); }
-function _loadCache() {
-  const s = localStorage.getItem("foodtruck_vendors");
-  return s ? JSON.parse(s) : (window.INITIAL_VENDORS || []);
-}
 
-// --- Chargement initial ---
 async function initDatabase() {
   try {
-    const snap = await getDocs(_vendorsCol);
+    const snap = await getDocs(_col);
     if (snap.empty) {
       vendors = window.INITIAL_VENDORS || [];
       for (const v of vendors) await setDoc(doc(_db, "vendors", v.id), v);
-      console.log("[FB] Base initialisée avec", vendors.length, "vendors");
     } else {
       vendors = snap.docs.map(d => d.data());
-      console.log("[FB] Chargé", vendors.length, "vendors depuis Firestore");
     }
     _cache();
-  } catch (e) {
-    console.warn("[FB] Erreur chargement, fallback local :", e);
-    vendors = _loadCache();
+    console.log("[FB] Chargé", vendors.length, "vendors");
+  } catch(e) {
+    console.warn("[FB] fallback local:", e);
+    const s = localStorage.getItem("foodtruck_vendors");
+    vendors = s ? JSON.parse(s) : (window.INITIAL_VENDORS || []);
   }
 }
 
-// --- Temps réel ---
 function listenVendors() {
-  onSnapshot(_vendorsCol, snap => {
+  onSnapshot(_col, snap => {
     vendors = snap.docs.map(d => d.data());
     _cache();
-    // Ne rafraîchit que si la carte est initialisée ET la vue active
     if (clientMap && document.getElementById("view-client")?.classList.contains("active")) renderClientResults();
     if (document.getElementById("view-admin")?.classList.contains("active")) renderAdminVendors();
-  }, e => console.warn("[FB] onSnapshot:", e));
+  }, e => console.warn("[FB] snapshot:", e));
 }
 
-// --- Sauvegarder un vendor ---
 async function saveVendor(v) {
   try { await setDoc(doc(_db, "vendors", v.id), v); _cache(); }
   catch(e) { console.warn("[FB] saveVendor:", e); }
 }
 
-// --- Sauvegarder tous (batch) ---
 async function saveVendors() {
   try {
-    const batch = writeBatch(_db);
-    vendors.forEach(v => batch.set(doc(_db, "vendors", v.id), v));
-    await batch.commit();
-    _cache();
+    const b = writeBatch(_db);
+    vendors.forEach(v => b.set(doc(_db, "vendors", v.id), v));
+    await b.commit(); _cache();
   } catch(e) { console.warn("[FB] saveVendors:", e); }
 }
 
-// --- Supprimer un vendor ---
 async function deleteVendorFromDB(id) {
   try { await deleteDoc(doc(_db, "vendors", id)); _cache(); }
   catch(e) { console.warn("[FB] delete:", e); }
@@ -1400,91 +1388,46 @@ window.addEventListener("appinstalled", () => {
 });
 
 // ==========================================================================
-// HEADER + SEARCH-SECTION AUTO-HIDE AU SWIPE — mobile uniquement
+// HEADER AUTO-HIDE AU SCROLL — mobile uniquement
 // ==========================================================================
 
 (function() {
-  let startY = 0;
-  let hidden = false;
+  let lastY = 0;
+  const THRESHOLD = 30;
+  const header = document.querySelector("header") || document.getElementsByTagName("header")[0];
 
-  function getEls() {
-    return {
-      header:  document.querySelector("header"),
-      search:  document.querySelector(".search-section"),
-      btn:     document.getElementById("map-toggle-btn")
-    };
-  }
+  function handleScroll(e) {
+    if (window.innerWidth > 768) return;
+    const el = e.target;
+    const y = el.scrollTop;
 
-  function hideUI() {
-    if (hidden) return;
-    hidden = true;
-    const { header, search, btn } = getEls();
-    if (header) {
-      header.style.transition = "transform 0.3s ease, opacity 0.3s ease";
-      header.style.transform  = "translateY(-110%)";
-      header.style.opacity    = "0";
+    if (y > lastY && y > THRESHOLD) {
+      header.style.transform = "translateY(-100%)";
+      header.style.opacity = "0";
       header.style.pointerEvents = "none";
-    }
-    if (search) {
-      search.style.transition = "transform 0.3s ease, opacity 0.3s ease, max-height 0.3s ease, padding 0.3s ease";
-      search.style.transform  = "translateY(-10px)";
-      search.style.opacity    = "0";
-      search.style.maxHeight  = "0";
-      search.style.padding    = "0";
-      search.style.overflow   = "hidden";
-      // Attend la fin de l'animation pour retirer complètement le bloc du flux
-      setTimeout(() => { if (hidden && search) search.style.display = "none"; }, 300);
-    }
-    if (btn) {
-      btn.style.transition = "opacity 0.3s ease";
-      btn.style.opacity    = "0";
-      btn.style.pointerEvents = "none";
-    }
-  }
-
-  function showUI() {
-    if (!hidden) return;
-    hidden = false;
-    const { header, search, btn } = getEls();
-    if (header) {
-      header.style.transform     = "";
-      header.style.opacity       = "";
+    } else if (y < lastY - 5 || y <= THRESHOLD) {
+      header.style.transform = "";
+      header.style.opacity = "";
       header.style.pointerEvents = "";
     }
-    if (search) {
-      search.style.display = "flex"; // On le remet immédiatement dans le flux
-      // Petit délai pour forcer le navigateur à capter le display avant l'animation
-      setTimeout(() => {
-        if (!hidden && search) {
-          search.style.transform  = "";
-          search.style.opacity    = "";
-          search.style.maxHeight  = "";
-          search.style.overflow   = "";
-          search.style.padding    = "";
-        }
-      }, 10);
-    }
-    if (btn) {
-      btn.style.opacity       = "";
-      btn.style.pointerEvents = "";
-    }
+    lastY = y;
   }
 
-  document.addEventListener("touchstart", (e) => {
-    if (window.innerWidth > 768) return;
-    startY = e.touches[0].clientY;
-  }, { passive: true });
+  // Délégation : on écoute tous les scrolls sur document et on filtre .results-section
+  document.addEventListener("scroll", function(e) {
+    if (e.target && e.target.classList && e.target.classList.contains("results-section")) {
+      handleScroll(e);
+    }
+  }, true); // capture phase pour attraper les scrolls sur éléments enfants
 
-  document.addEventListener("touchend", (e) => {
-    if (window.innerWidth > 768) return;
-    const endY = e.changedTouches[0].clientY;
-    const diff = startY - endY; // positif = swipe vers le bas
-
-    if (diff > 40)  hideUI();  // swipe bas  → cache
-    if (diff < -30) showUI();  // swipe haut → montre
-  }, { passive: true });
-
-  window.addEventListener("tabChanged", () => { showUI(); });
+  // Réaffiche le header au changement d'onglet
+  window.addEventListener("tabChanged", () => {
+    if (!header) return;
+    header.style.transform = "";
+    header.style.opacity = "";
+    header.style.pointerEvents = "";
+    lastY = 0;
+  });
 })();
 
 // ==========================================================================
@@ -1536,3 +1479,84 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Load default Client view
   switchTab("client");
 });
+
+// ==========================================================================
+// SWIPE HIDE — header + search-section sur mobile
+// ==========================================================================
+(function () {
+  let startY = 0;
+  let hidden = false;
+
+  function els() {
+    return {
+      header: document.querySelector("header"),
+      search: document.querySelector(".search-section"),
+      btn:    document.getElementById("map-toggle-btn")
+    };
+  }
+
+  function hideUI() {
+    if (hidden) return;
+    hidden = true;
+    const { header, search, btn } = els();
+    if (header) {
+      header.style.transition    = "transform 0.3s ease, opacity 0.3s ease";
+      header.style.transform     = "translateY(-110%)";
+      header.style.opacity       = "0";
+      header.style.pointerEvents = "none";
+    }
+    if (search) {
+      search.style.transition = "opacity 0.3s ease, max-height 0.3s ease, padding 0.3s ease";
+      search.style.opacity    = "0";
+      search.style.maxHeight  = "0";
+      search.style.padding    = "0";
+      search.style.overflow   = "hidden";
+      setTimeout(() => { if (hidden && search) search.style.display = "none"; }, 310);
+    }
+    if (btn) {
+      btn.style.transition    = "opacity 0.3s ease";
+      btn.style.opacity       = "0";
+      btn.style.pointerEvents = "none";
+    }
+  }
+
+  function showUI() {
+    if (!hidden) return;
+    hidden = false;
+    const { header, search, btn } = els();
+    if (header) {
+      header.style.transform     = "";
+      header.style.opacity       = "";
+      header.style.pointerEvents = "";
+    }
+    if (search) {
+      search.style.display = "flex";
+      setTimeout(() => {
+        if (!hidden && search) {
+          search.style.opacity   = "";
+          search.style.maxHeight = "";
+          search.style.overflow  = "";
+          search.style.padding   = "";
+        }
+      }, 10);
+    }
+    if (btn) {
+      btn.style.opacity       = "";
+      btn.style.pointerEvents = "";
+    }
+  }
+
+  document.addEventListener("touchstart", (e) => {
+    if (window.innerWidth > 768) return;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener("touchend", (e) => {
+    if (window.innerWidth > 768) return;
+    const diff = startY - e.changedTouches[0].clientY;
+    if (diff > 40)  hideUI();
+    if (diff < -30) showUI();
+  }, { passive: true });
+
+  window.addEventListener("tabChanged", showUI);
+})();
