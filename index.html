@@ -486,6 +486,11 @@
                   <label for="v-profile-phone">📞 Numéro de téléphone (Commandes)</label>
                   <input type="tel" id="v-profile-phone" class="form-control" placeholder="Ex: 06 12 34 56 78">
                 </div>
+
+                <div class="form-group">
+                  <label for="v-profile-link">🔗 Lien externe (Site web, Facebook, Instagram...)</label>
+                  <input type="url" id="v-profile-link" class="form-control" placeholder="Ex: https://www.facebook.com/monFoodtruck">
+                </div>
                 
                 <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.5rem;">
                   💾 Enregistrer les informations
@@ -847,7 +852,10 @@
         <p class="detail-desc" id="detail-desc"></p>
 
         <!-- ✅ NOUVEAU : Bouton téléphone cliquable -->
-        <div id="detail-phone" style="text-align: center; margin: 0.25rem 0 1rem 0; display: none;"></div>
+        <div id="detail-phone" style="text-align: center; margin: 0.25rem 0 0.5rem 0; display: none;"></div>
+
+        <!-- ✅ NOUVEAU : Lien externe cliquable -->
+        <div id="detail-link" style="text-align: center; margin: 0 0 1rem 0; display: none;"></div>
 
         <div class="detail-grid">
           <div>
