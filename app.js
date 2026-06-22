@@ -1,7 +1,25 @@
 // ==========================================================================
+// FIREBASE 12.15.0 — Firestore
+// ==========================================================================
+import { initializeApp }    from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, writeBatch }
+  from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const _firebaseApp = initializeApp({
+  apiKey:            "AIzaSyAxV7HqiF3IEDY5SnHgBBWLvbgc8xqJ3rg",
+  authDomain:        "trucklocate-2e5ee.firebaseapp.com",
+  projectId:         "trucklocate-2e5ee",
+  storageBucket:     "trucklocate-2e5ee.firebasestorage.app",
+  messagingSenderId: "419821613849",
+  appId:             "1:419821613849:web:c13b6339e6c0ae284bcb88"
+});
+
+const _db         = getFirestore(_firebaseApp);
+const _vendorsCol = collection(_db, "vendors");
+
+// ==========================================================================
 // STATE
 // ==========================================================================
-
 let vendors = [];
 let currentUser = null;
 let clientSearchCoords = { lat: 48.8566, lng: 2.3522 };
@@ -13,70 +31,62 @@ let clientMap = null, modalMap = null, modalMarker = null, activeModalDay = null
 
 const DAYS_OF_WEEK = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
-// ---------- Helpers localStorage (cache hors-ligne) ----------
-function _cacheVendors() {
-  localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
-}
-function _loadCached() {
+// --- Cache local (hors-ligne) ---
+function _cache() { localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors)); }
+function _loadCache() {
   const s = localStorage.getItem("foodtruck_vendors");
   return s ? JSON.parse(s) : (window.INITIAL_VENDORS || []);
 }
 
-// ---------- Chargement initial depuis Firestore ----------
+// --- Chargement initial ---
 async function initDatabase() {
   try {
-    const snap = await window._vendorsCol.get();
+    const snap = await getDocs(_vendorsCol);
     if (snap.empty) {
-      // Première utilisation : seeder depuis mockData
       vendors = window.INITIAL_VENDORS || [];
-      for (const v of vendors) {
-        await window._vendorsCol.doc(v.id).set(v);
-      }
+      for (const v of vendors) await setDoc(doc(_db, "vendors", v.id), v);
+      console.log("[FB] Base initialisée avec", vendors.length, "vendors");
     } else {
       vendors = snap.docs.map(d => d.data());
+      console.log("[FB] Chargé", vendors.length, "vendors depuis Firestore");
     }
-    _cacheVendors();
-    console.log("[FB] Chargé", vendors.length, "vendors depuis Firestore");
+    _cache();
   } catch (e) {
-    console.warn("[FB] Erreur Firestore, fallback cache local :", e);
-    vendors = _loadCached();
+    console.warn("[FB] Erreur chargement, fallback local :", e);
+    vendors = _loadCache();
   }
 }
 
-// ---------- Écoute temps réel ----------
+// --- Temps réel ---
 function listenVendors() {
-  window._vendorsCol.onSnapshot(snap => {
+  onSnapshot(_vendorsCol, snap => {
     vendors = snap.docs.map(d => d.data());
-    _cacheVendors();
+    _cache();
     if (document.getElementById("view-client")?.classList.contains("active")) renderClientResults();
     if (document.getElementById("view-admin")?.classList.contains("active"))  renderAdminVendors();
   }, e => console.warn("[FB] onSnapshot:", e));
 }
 
-// ---------- Sauvegarde d'un seul vendor ----------
+// --- Sauvegarder un vendor ---
 async function saveVendor(v) {
-  try {
-    await window._vendorsCol.doc(v.id).set(v);
-    _cacheVendors();
-  } catch(e) { console.warn("[FB] saveVendor:", e); }
+  try { await setDoc(doc(_db, "vendors", v.id), v); _cache(); }
+  catch(e) { console.warn("[FB] saveVendor:", e); }
 }
 
-// ---------- Sauvegarde de tous (compatibilité) ----------
+// --- Sauvegarder tous (batch) ---
 async function saveVendors() {
   try {
-    const batch = window._db.batch();
-    vendors.forEach(v => batch.set(window._vendorsCol.doc(v.id), v));
+    const batch = writeBatch(_db);
+    vendors.forEach(v => batch.set(doc(_db, "vendors", v.id), v));
     await batch.commit();
-    _cacheVendors();
+    _cache();
   } catch(e) { console.warn("[FB] saveVendors:", e); }
 }
 
-// ---------- Suppression ----------
+// --- Supprimer un vendor ---
 async function deleteVendorFromDB(id) {
-  try {
-    await window._vendorsCol.doc(id).delete();
-    _cacheVendors();
-  } catch(e) { console.warn("[FB] delete:", e); }
+  try { await deleteDoc(doc(_db, "vendors", id)); _cache(); }
+  catch(e) { console.warn("[FB] delete:", e); }
 }
 
 // Get day name in French
