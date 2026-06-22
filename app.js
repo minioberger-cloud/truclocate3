@@ -1495,24 +1495,44 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
   }
 
+  // Mesure la hauteur réelle du bloc avant de l'animer
+  function getHeight(el) {
+    return el.getBoundingClientRect().height;
+  }
+
   function hideUI() {
     if (hidden) return;
     hidden = true;
     const { header, search, btn } = els();
+
+    // Header — glisse vers le haut
     if (header) {
-      header.style.transition    = "transform 0.3s ease, opacity 0.3s ease";
-      header.style.transform     = "translateY(-110%)";
+      header.style.transition    = "transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease";
+      header.style.transform     = "translateY(-100%)";
       header.style.opacity       = "0";
       header.style.pointerEvents = "none";
     }
+
+    // Search section — se replie vers le haut en douceur
     if (search) {
-      search.style.transition = "opacity 0.3s ease, max-height 0.3s ease, padding 0.3s ease";
-      search.style.opacity    = "0";
-      search.style.maxHeight  = "0";
-      search.style.padding    = "0";
+      const h = getHeight(search);
+      // On fixe d'abord la hauteur courante pour que la transition parte d'une valeur définie
+      search.style.maxHeight  = h + "px";
       search.style.overflow   = "hidden";
-      setTimeout(() => { if (hidden && search) search.style.display = "none"; }, 310);
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          search.style.transition = "max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease, padding 0.4s ease";
+          search.style.maxHeight  = "0";
+          search.style.opacity    = "0";
+          search.style.padding    = "0";
+        });
+      });
+
+      setTimeout(() => { if (hidden && search) search.style.display = "none"; }, 420);
     }
+
+    // Bouton carte
     if (btn) {
       btn.style.transition    = "opacity 0.3s ease";
       btn.style.opacity       = "0";
@@ -1524,23 +1544,43 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!hidden) return;
     hidden = false;
     const { header, search, btn } = els();
+
+    // Header — redescend
     if (header) {
+      header.style.transition    = "transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease";
       header.style.transform     = "";
       header.style.opacity       = "";
       header.style.pointerEvents = "";
     }
+
+    // Search section — se déplie vers le bas
     if (search) {
-      search.style.display = "flex";
+      search.style.display    = "flex";
+      search.style.overflow   = "hidden";
+      search.style.maxHeight  = "0";
+      search.style.opacity    = "0";
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          search.style.transition = "max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease, padding 0.4s ease";
+          search.style.maxHeight  = "400px"; // valeur max généreuse
+          search.style.opacity    = "";
+          search.style.padding    = "";
+        });
+      });
+
       setTimeout(() => {
         if (!hidden && search) {
-          search.style.opacity   = "";
           search.style.maxHeight = "";
           search.style.overflow  = "";
-          search.style.padding   = "";
+          search.style.transition = "";
         }
-      }, 10);
+      }, 420);
     }
+
+    // Bouton carte
     if (btn) {
+      btn.style.transition    = "opacity 0.3s ease";
       btn.style.opacity       = "";
       btn.style.pointerEvents = "";
     }
@@ -1558,5 +1598,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (diff < -30) showUI();
   }, { passive: true });
 
-  window.addEventListener("tabChanged", showUI);
+  window.addEventListener("tabChanged", () => { if (hidden) showUI(); });
 })();
