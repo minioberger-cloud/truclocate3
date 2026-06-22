@@ -1400,58 +1400,83 @@ window.addEventListener("appinstalled", () => {
 });
 
 // ==========================================================================
-// HEADER AUTO-HIDE AU SCROLL — mobile uniquement
+// HEADER + SEARCH-SECTION AUTO-HIDE AU SWIPE — mobile uniquement
 // ==========================================================================
 
 (function() {
   let startY = 0;
-  let lastY = 0;
-  let ticking = false;
-  const THRESHOLD = 40;
+  let hidden = false;
 
-  function getHeader() { return document.querySelector("header"); }
-  function getBtn()    { return document.getElementById("map-toggle-btn"); }
+  function getEls() {
+    return {
+      header:  document.querySelector("header"),
+      search:  document.querySelector(".search-section"),
+      btn:     document.getElementById("map-toggle-btn")
+    };
+  }
 
   function hideUI() {
-    const h = getHeader(), b = getBtn();
-    if (h) { h.style.transform = "translateY(-110%)"; h.style.transition = "transform 0.3s ease"; }
-    if (b) { b.style.transform = "translateY(-10px)"; b.style.opacity = "0"; b.style.pointerEvents = "none"; b.style.transition = "all 0.3s ease"; }
+    if (hidden) return;
+    hidden = true;
+    const { header, search, btn } = getEls();
+    if (header) {
+      header.style.transition = "transform 0.3s ease, opacity 0.3s ease";
+      header.style.transform  = "translateY(-110%)";
+      header.style.opacity    = "0";
+      header.style.pointerEvents = "none";
+    }
+    if (search) {
+      search.style.transition = "transform 0.35s ease, opacity 0.35s ease, max-height 0.35s ease";
+      search.style.transform  = "translateY(-10px)";
+      search.style.opacity    = "0";
+      search.style.maxHeight  = "0";
+      search.style.overflow   = "hidden";
+      search.style.padding    = "0";
+    }
+    if (btn) {
+      btn.style.transition = "opacity 0.3s ease";
+      btn.style.opacity    = "0";
+      btn.style.pointerEvents = "none";
+    }
   }
 
   function showUI() {
-    const h = getHeader(), b = getBtn();
-    if (h) { h.style.transform = ""; }
-    if (b) { b.style.transform = ""; b.style.opacity = ""; b.style.pointerEvents = ""; }
+    if (!hidden) return;
+    hidden = false;
+    const { header, search, btn } = getEls();
+    if (header) {
+      header.style.transform  = "";
+      header.style.opacity    = "";
+      header.style.pointerEvents = "";
+    }
+    if (search) {
+      search.style.transform  = "";
+      search.style.opacity    = "";
+      search.style.maxHeight  = "";
+      search.style.overflow   = "";
+      search.style.padding    = "";
+    }
+    if (btn) {
+      btn.style.opacity    = "";
+      btn.style.pointerEvents = "";
+    }
   }
 
-  // Touch events — plus fiables que scroll sur mobile
   document.addEventListener("touchstart", (e) => {
-    startY = e.touches[0].clientY;
-    lastY  = startY;
-  }, { passive: true });
-
-  document.addEventListener("touchmove", (e) => {
     if (window.innerWidth > 768) return;
-    const y    = e.touches[0].clientY;
-    const diff = lastY - y; // positif = scroll vers le bas
-    lastY = y;
-
-    if (!ticking) {
-      requestAnimationFrame(() => {
-        const totalDiff = startY - y;
-        if (totalDiff > THRESHOLD) {
-          hideUI();
-        } else if (totalDiff < -20) {
-          showUI();
-        }
-        ticking = false;
-      });
-      ticking = true;
-    }
+    startY = e.touches[0].clientY;
   }, { passive: true });
 
-  // Réaffiche au changement d'onglet
-  window.addEventListener("tabChanged", () => { showUI(); startY = 0; lastY = 0; });
+  document.addEventListener("touchend", (e) => {
+    if (window.innerWidth > 768) return;
+    const endY = e.changedTouches[0].clientY;
+    const diff = startY - endY; // positif = swipe vers le bas
+
+    if (diff > 40)  hideUI();  // swipe bas  → cache
+    if (diff < -30) showUI();  // swipe haut → montre
+  }, { passive: true });
+
+  window.addEventListener("tabChanged", () => { showUI(); });
 })();
 
 // ==========================================================================
