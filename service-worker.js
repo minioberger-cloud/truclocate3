@@ -3,7 +3,7 @@
 // Version : incrémente ce numéro à chaque déploiement pour forcer le refresh
 // ==========================================================================
 
-const CACHE_NAME = "trucklocate-v1";
+const CACHE_NAME = "trucklocate-v3";
 
 // Fichiers mis en cache lors de l'installation (shell de l'app)
 const STATIC_ASSETS = [
