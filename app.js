@@ -147,20 +147,9 @@ function initClientMap() {
   const mapEl = document.getElementById("leaflet-map");
   if (!mapEl) return;
 
-  // Attend que le conteneur ait une taille réelle avant d'initialiser Leaflet
+  // Vérifie que le conteneur a une taille réelle
   const rect = mapEl.getBoundingClientRect();
-  if (rect.width === 0 || rect.height === 0) {
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
-          ro.disconnect();
-          initClientMap();
-        }
-      }
-    });
-    ro.observe(mapEl);
-    return;
-  }
+  if (rect.width === 0 || rect.height === 0) return; // sera réessayé par tryInitMap
 
   clientMap = L.map("leaflet-map", {
     zoomControl: false
@@ -177,9 +166,6 @@ function initClientMap() {
   clientMap.on("click", (e) => {
     setClientSearchLocation(e.latlng.lat, e.latlng.lng, "Position sélectionnée sur la carte");
   });
-
-  setTimeout(() => clientMap.invalidateSize({ animate: false }), 100);
-  setTimeout(() => clientMap.invalidateSize({ animate: false }), 500);
 }
 
 function initModalMap() {
@@ -1209,13 +1195,21 @@ window.switchTab = function(tabName) {
   if (tabName === "client") {
     document.getElementById("view-client").classList.add("active");
     document.getElementById("tab-client").classList.add("active");
-    
-    // Invalidate Leaflet map size (crucial since it was hidden)
-    setTimeout(() => {
+
+    // Lance la carte — si le conteneur n'est pas encore dimensionné,
+    // on réessaie jusqu'à ce qu'elle soit créée
+    function tryInitMap(attempts) {
       initClientMap();
-      clientMap.invalidateSize();
-      renderClientResults();
-    }, 100);
+      if (clientMap) {
+        clientMap.invalidateSize({ animate: false });
+        renderClientResults();
+        // Second invalidateSize pour s'assurer que les tuiles se chargent
+        setTimeout(() => { if (clientMap) clientMap.invalidateSize({ animate: false }); }, 300);
+      } else if (attempts > 0) {
+        setTimeout(() => tryInitMap(attempts - 1), 150);
+      }
+    }
+    setTimeout(() => tryInitMap(10), 50);
 
   } else if (tabName === "login") {
     document.getElementById("view-login").classList.add("active");
