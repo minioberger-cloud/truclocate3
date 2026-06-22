@@ -147,7 +147,7 @@ function initClientMap() {
   const mapEl = document.getElementById("leaflet-map");
   if (!mapEl) return;
 
-  // Si le conteneur n'a pas encore de taille, on attend qu'il en ait une
+  // Attend que le conteneur ait une taille réelle avant d'initialiser Leaflet
   const rect = mapEl.getBoundingClientRect();
   if (rect.width === 0 || rect.height === 0) {
     const ro = new ResizeObserver((entries) => {
@@ -178,9 +178,8 @@ function initClientMap() {
     setClientSearchLocation(e.latlng.lat, e.latlng.lng, "Position sélectionnée sur la carte");
   });
 
-  // Force le recalcul de taille après init
-  setTimeout(() => clientMap.invalidateSize({ animate: false }), 50);
-  setTimeout(() => clientMap.invalidateSize({ animate: false }), 300);
+  setTimeout(() => clientMap.invalidateSize({ animate: false }), 100);
+  setTimeout(() => clientMap.invalidateSize({ animate: false }), 500);
 }
 
 function initModalMap() {
