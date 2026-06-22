@@ -1,4 +1,8 @@
-// ==========================================================================
+# Let's check the code provided for PARTNER_SLOTS_TAKEN which might be undefined and cause a crash
+# Line with: const remaining = PARTNER_SLOTS_TOTAL - PARTNER_SLOTS_TAKEN;
+# It should be PARTNER_SLOTS_TOTAL - getSlotsTaken();
+
+js_code = """// ==========================================================================
 // FIREBASE 12.15.0 — Firestore
 // ==========================================================================
 import { initializeApp }    from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
@@ -364,34 +368,34 @@ function renderClientResults() {
     marker.bindPopup(popupContent);
     clientMarkersList.push(marker);
 
-    // ✅ Aperçu des 2 premiers plats pour la card
+    // Aperçu des 2 premiers plats pour la card
     let menuPreviewHtml = "";
     if (vendor.menu && vendor.menu.length > 0) {
       const previewItems = vendor.menu.slice(0, 2);
       menuPreviewHtml = `
         <div style="margin-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 0.5rem;">
-          ${previewItems.map(p => `
+          \${previewItems.map(p => `
             <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; padding: 0.2rem 0; color: var(--text-secondary);">
-              <span>🍽️ ${p.name}</span>
-              <span style="font-weight: 700; color: var(--primary); white-space: nowrap; margin-left: 0.5rem;">${p.price.toFixed(2)} €</span>
+              <span>🍽️ \${p.name}</span>
+              <span style="font-weight: 700; color: var(--primary); white-space: nowrap; margin-left: 0.5rem;">\${p.price.toFixed(2)} €</span>
             </div>
           `).join("")}
-          ${vendor.menu.length > 2 ? `<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">+ ${vendor.menu.length - 2} autre(s) plat(s)…</div>` : ""}
+          \${vendor.menu.length > 2 ? `<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">+ \${vendor.menu.length - 2} autre(s) plat(s)…</div>` : ""}
         </div>
       `;
     }
 
-    // ✅ Téléphone affiché sur la card si disponible
+    // Téléphone affiché sur la card si disponible
     let phoneHtml = "";
     if (vendor.phone) {
-      const cleaned = vendor.phone.replace(/\s/g, "");
+      const cleaned = vendor.phone.replace(/\\s/g, "");
       phoneHtml = `
-        <a href="tel:${cleaned}" onclick="event.stopPropagation()" style="
+        <a href="tel:\${cleaned}" onclick="event.stopPropagation()" style="
           display: inline-flex; align-items: center; gap: 0.4rem;
           background: var(--primary); color: #000; font-weight: 700;
           padding: 0.45rem 0.9rem; border-radius: 2rem; text-decoration: none;
           font-size: 0.82rem; margin-top: 0.6rem;
-        ">📞 ${vendor.phone}</a>
+        ">📞 \${vendor.phone}</a>
       `;
     }
 
@@ -400,28 +404,28 @@ function renderClientResults() {
     card.className = "truck-card";
     card.style.cursor = "pointer";
     card.innerHTML = `
-      <div class="truck-card-image" style="background-image: url('${vendor.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'}')">
-        <span class="truck-distance-tag">${distance.toFixed(1)} km</span>
+      <div class="truck-card-image" style="background-image: url('\${vendor.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'}')">
+        <span class="truck-distance-tag">\${distance.toFixed(1)} km</span>
       </div>
       <div class="truck-card-content">
-        <h3 class="truck-card-title">${vendor.name}</h3>
+        <h3 class="truck-card-title">\${vendor.name}</h3>
         <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.25rem;">
-          📍 ${schedule.city || ""}${schedule.city && schedule.address ? " - " : ""}${schedule.address || ""}
+          📍 \${schedule.city || ""}\${schedule.city && schedule.address ? " - " : ""}\${schedule.address || ""}
         </div>
-        <p class="truck-card-desc">${vendor.description || "Aucune description disponible."}</p>
-        ${menuPreviewHtml}
+        <p class="truck-card-desc">\${vendor.description || "Aucune description disponible."}</p>
+        \${menuPreviewHtml}
         <div class="truck-card-meta" style="margin-top: 0.6rem;">
           <span class="truck-status">
             <span class="status-dot open"></span>
-            Ouvert : ${schedule.openTime} - ${schedule.closeTime}
+            Ouvert : \${schedule.openTime} - \${schedule.closeTime}
           </span>
-          <span style="font-weight: 600; color: var(--primary);">${vendor.menu.length} plats</span>
+          <span style="font-weight: 600; color: var(--primary);">\${vendor.menu.length} plats</span>
         </div>
-        ${phoneHtml}
+        \${phoneHtml}
       </div>
     `;
 
-    // ✅ Clic sur la card : centre la carte ET ouvre directement la modal de détail
+    // Clic sur la card : centre la carte ET ouvre directement la modal de détail
     card.addEventListener("click", (e) => {
       if (e.target.tagName === 'A') return; // Ne pas déclencher si clic sur le lien tel:
       clientMap.setView([schedule.lat, schedule.lng], 15);
@@ -470,23 +474,23 @@ window.openTruckDetailModal = function(vendorId) {
   if (!vendor) return;
 
   document.getElementById("detail-title").innerText = vendor.name;
-  document.getElementById("detail-image").style.backgroundImage = `url('${vendor.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'}')`;
+  document.getElementById("detail-image").style.backgroundImage = `url('\${vendor.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'}')`;
   document.getElementById("detail-desc").innerText = vendor.description || "Aucune description.";
 
-  // ✅ Téléphone cliquable dans la modal
+  // Téléphone cliquable dans la modal
   const phoneEl = document.getElementById("detail-phone");
   if (phoneEl) {
     if (vendor.phone) {
-      const cleaned = vendor.phone.replace(/\s/g, "");
+      const cleaned = vendor.phone.replace(/\\s/g, "");
       phoneEl.innerHTML = `
-        <a href="tel:${cleaned}" style="
+        <a href="tel:\${cleaned}" style="
           display: inline-flex; align-items: center; gap: 0.6rem;
           background: var(--primary); color: #000; font-weight: 700;
           padding: 0.65rem 1.4rem; border-radius: 2rem; text-decoration: none;
           font-size: 1.05rem; box-shadow: 0 4px 14px rgba(245,158,11,0.35);
           transition: opacity 0.2s;
         " onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-          📞 Appeler — ${vendor.phone}
+          📞 Appeler — \${vendor.phone}
         </a>
       `;
       phoneEl.style.display = "block";
@@ -496,7 +500,7 @@ window.openTruckDetailModal = function(vendorId) {
     }
   }
 
-  // ✅ Menu list — tous les plats affichés
+  // Menu list — tous les plats affichés
   const menuContainer = document.getElementById("detail-menu-list");
   menuContainer.innerHTML = "";
   if (!vendor.menu || vendor.menu.length === 0) {
@@ -507,10 +511,10 @@ window.openTruckDetailModal = function(vendorId) {
       div.className = "detail-menu-item";
       div.innerHTML = `
         <div>
-          <h4 style="font-weight: 700; color: var(--text-primary);">${item.name}</h4>
-          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">${item.description || ""}</p>
+          <h4 style="font-weight: 700; color: var(--text-primary);">\${item.name}</h4>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">\${item.description || ""}</p>
         </div>
-        <span style="font-weight: 700; color: var(--primary); font-size: 1rem; white-space: nowrap;">${item.price.toFixed(2)} €</span>
+        <span style="font-weight: 700; color: var(--primary); font-size: 1rem; white-space: nowrap;">\${item.price.toFixed(2)} €</span>
       `;
       menuContainer.appendChild(div);
     });
@@ -525,21 +529,21 @@ window.openTruckDetailModal = function(vendorId) {
     const sched = vendor.schedule[day];
     const isToday = day === currentDay;
     const row = document.createElement("div");
-    row.className = `detail-schedule-row ${isToday ? 'today' : ''}`;
+    row.className = `detail-schedule-row \${isToday ? 'today' : ''}`;
     
     let timeText = "Fermé";
     let addrText = "";
     if (sched && sched.active) {
-      timeText = `${sched.openTime} - ${sched.closeTime}`;
-      const locationLabel = `${sched.city || ""}${sched.city && sched.address ? ", " : ""}${sched.address || ""}`;
-      addrText = `<span style="display: block; font-size: 0.75rem; color: var(--text-muted); text-align: right; max-width: 180px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${locationLabel}">📍 ${locationLabel}</span>`;
+      timeText = `\${sched.openTime} - \${sched.closeTime}`;
+      const locationLabel = `\${sched.city || ""}\${sched.city && sched.address ? ", " : ""}\${sched.address || ""}`;
+      addrText = `<span style="display: block; font-size: 0.75rem; color: var(--text-muted); text-align: right; max-width: 180px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="\${locationLabel}">📍 \${locationLabel}</span>`;
     }
 
     row.innerHTML = `
-      <span>${day} ${isToday ? '(Aujourd\'hui)' : ''}</span>
+      <span>\${day} \${isToday ? '(Aujourd\\'hui)' : ''}</span>
       <div style="text-align: right;">
-        <span style="font-weight: 600;">${timeText}</span>
-        ${addrText}
+        <span style="font-weight: 600;">\${timeText}</span>
+        \${addrText}
       </div>
     `;
     scheduleContainer.appendChild(row);
@@ -568,15 +572,15 @@ function renderAdminVendors() {
   vendors.forEach(vendor => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td style="font-weight: 600; color: var(--text-primary);">${vendor.name}</td>
-      <td style="color: var(--text-secondary);">${vendor.ownerUsername}</td>
-      <td style="color: var(--text-muted); font-size: 0.9rem;">${vendor.menu.length} plats</td>
+      <td style="font-weight: 600; color: var(--text-primary);">\${vendor.name}</td>
+      <td style="color: var(--text-secondary);">\${vendor.ownerUsername}</td>
+      <td style="color: var(--text-muted); font-size: 0.9rem;">\${vendor.menu.length} plats</td>
       <td>
         <div style="display: flex; align-items: center; gap: 0.4rem;">
           <input
             type="tel"
-            id="admin-phone-${vendor.id}"
-            value="${vendor.phone || ''}"
+            id="admin-phone-\${vendor.id}"
+            value="\${vendor.phone || ''}"
             placeholder="06 XX XX XX XX"
             style="
               background: rgba(255,255,255,0.05);
@@ -593,7 +597,7 @@ function renderAdminVendors() {
             onblur="this.style.borderColor='rgba(255,255,255,0.1)'"
           >
           <button
-            onclick="saveAdminPhone('${vendor.id}')"
+            onclick="saveAdminPhone('\${vendor.id}')"
             title="Enregistrer le numéro"
             style="
               background: var(--primary);
@@ -613,7 +617,7 @@ function renderAdminVendors() {
         </div>
       </td>
       <td>
-        <button class="btn-icon-danger" onclick="deleteVendor('${vendor.id}')" title="Supprimer le partenaire">
+        <button class="btn-icon-danger" onclick="deleteVendor('\${vendor.id}')" title="Supprimer le partenaire">
           🗑️
         </button>
       </td>
@@ -623,7 +627,7 @@ function renderAdminVendors() {
 }
 
 window.saveAdminPhone = async function(vendorId) {
-  const input = document.getElementById(`admin-phone-${vendorId}`);
+  const input = document.getElementById(`admin-phone-\${vendorId}`);
   if (!input) return;
 
   const phone = input.value.trim();
@@ -632,7 +636,7 @@ window.saveAdminPhone = async function(vendorId) {
 
   vendors[vIndex].phone = phone;
   await saveVendors();
-  showToast(`Téléphone mis à jour : ${phone || "effacé"}`);
+  showToast(`Téléphone mis à jour : \${phone || "effacé"}`);
 };
 
 async function handleCreateVendor(e) {
@@ -676,7 +680,7 @@ async function handleCreateVendor(e) {
   vendors.push(newVendor);
   await saveVendor(newVendor);
   renderAdminVendors();
-  showToast(`Partenaire "${name}" créé avec succès !`);
+  showToast(`Partenaire "\${name}" créé avec succès !`);
   
   // Reset form
   document.getElementById("admin-create-form").reset();
@@ -714,7 +718,7 @@ function handleVendorLogin(e) {
   if (vendor) {
     currentUser = vendor;
     updateAuthUI();
-    showToast(`Bienvenue, ${vendor.name} !`);
+    showToast(`Bienvenue, \${vendor.name} !`);
     switchTab("vendor");
     renderVendorDashboard();
   } else {
@@ -730,7 +734,7 @@ function updateAuthUI() {
     // Logged in
     let displayName = currentUser === "admin" ? "Administrateur" : currentUser.name;
     userBadge.innerHTML = `
-      <span>Connecté : <strong style="color: var(--primary);">${displayName}</strong></span>
+      <span>Connecté : <strong style="color: var(--primary);">\${displayName}</strong></span>
       <button class="logout-btn" onclick="logout()">Déconnexion</button>
     `;
     userBadge.style.display = "flex";
@@ -761,7 +765,7 @@ function renderVendorDashboard() {
   document.getElementById("v-profile-name").value = currentUser.name;
   document.getElementById("v-profile-desc").value = currentUser.description || "";
   document.getElementById("v-profile-image-url").value = currentUser.image || "";
-  // ✅ Remplir le champ téléphone
+  // Remplir le champ téléphone
   document.getElementById("v-profile-phone").value = currentUser.phone || "";
 
   // Render Menu List
@@ -771,7 +775,7 @@ function renderVendorDashboard() {
   renderVendorScheduleList();
 }
 
-// ✅ Profile Save — inclut maintenant le téléphone
+// Profile Save — inclut maintenant le téléphone
 async function saveVendorProfile(e) {
   e.preventDefault();
   if (!currentUser || currentUser === "admin") return;
@@ -782,7 +786,7 @@ async function saveVendorProfile(e) {
   vendors[index].name = document.getElementById("v-profile-name").value.trim();
   vendors[index].description = document.getElementById("v-profile-desc").value.trim();
   vendors[index].image = document.getElementById("v-profile-image-url").value.trim();
-  // ✅ Sauvegarde du numéro de téléphone
+  // Sauvegarde du numéro de téléphone
   vendors[index].phone = document.getElementById("v-profile-phone").value.trim();
 
   // Update current user copy too
@@ -821,12 +825,12 @@ function renderVendorMenuList() {
     itemDiv.className = "menu-list-item";
     itemDiv.innerHTML = `
       <div class="menu-list-info">
-        <h4>${item.name}</h4>
-        <p>${item.description || "Pas de description."}</p>
+        <h4>\${item.name}</h4>
+        <p>\${item.description || "Pas de description."}</p>
       </div>
       <div class="menu-list-price-action">
-        <span class="menu-list-price">${item.price.toFixed(2)} €</span>
-        <button class="btn-icon-danger" onclick="deleteMenuItem('${item.id}')" title="Supprimer">🗑️</button>
+        <span class="menu-list-price">\${item.price.toFixed(2)} €</span>
+        <button class="btn-icon-danger" onclick="deleteMenuItem('\${item.id}')" title="Supprimer">🗑️</button>
       </div>
     `;
     container.appendChild(itemDiv);
@@ -861,7 +865,7 @@ async function handleAddMenuItem(e) {
   
   await saveVendors();
   renderVendorMenuList();
-  showToast(`"${name}" ajouté au menu !`);
+  showToast(`"\${name}" ajouté au menu !`);
 
   // Clear form
   document.getElementById("vendor-menu-form").reset();
@@ -890,16 +894,16 @@ function renderVendorScheduleList() {
     const s = currentUser.schedule[day] || { active: false, city: "", address: "", lat: 0, lng: 0, openTime: "", closeTime: "" };
     
     const card = document.createElement("div");
-    card.className = `day-schedule-card ${s.active ? 'active' : ''}`;
-    card.id = `schedule-card-${day}`;
+    card.className = `day-schedule-card \${s.active ? 'active' : ''}`;
+    card.id = `schedule-card-\${day}`;
     
     card.innerHTML = `
       <div class="day-schedule-header">
-        <span class="day-name">${day}</span>
+        <span class="day-name">\${day}</span>
         <label class="switch-container">
-          <span class="switch-label">${s.active ? "Ouvert" : "Fermé"}</span>
+          <span class="switch-label">\${s.active ? "Ouvert" : "Fermé"}</span>
           <span class="switch">
-            <input type="checkbox" id="sched-active-${day}" ${s.active ? 'checked' : ''} onchange="toggleDayActive('${day}')">
+            <input type="checkbox" id="sched-active-\${day}" \${s.active ? 'checked' : ''} onchange="toggleDayActive('\${day}')">
             <span class="slider"></span>
           </span>
         </label>
@@ -908,11 +912,11 @@ function renderVendorScheduleList() {
       <div class="day-schedule-details">
         <div class="form-group">
           <label>Heure d'ouverture</label>
-          <input type="time" class="form-control" id="sched-open-${day}" value="${s.openTime || '11:00'}" onchange="updateDayTimes('${day}')">
+          <input type="time" class="form-control" id="sched-open-\${day}" value="\${s.openTime || '11:00'}" onchange="updateDayTimes('\${day}')">
         </div>
         <div class="form-group">
           <label>Heure de fermeture</label>
-          <input type="time" class="form-control" id="sched-close-${day}" value="${s.closeTime || '22:00'}" onchange="updateDayTimes('${day}')">
+          <input type="time" class="form-control" id="sched-close-\${day}" value="\${s.closeTime || '22:00'}" onchange="updateDayTimes('\${day}')">
         </div>
       </div>
 
@@ -920,14 +924,14 @@ function renderVendorScheduleList() {
         <div style="display: flex; gap: 0.75rem; width: 100%;">
           <div class="form-group" style="flex: 1; margin-bottom: 0;">
             <label>Ville</label>
-            <input type="text" class="form-control" id="sched-city-${day}" placeholder="Ex: Paris" value="${s.city || ''}" onchange="updateDayCity('${day}')">
+            <input type="text" class="form-control" id="sched-city-\${day}" placeholder="Ex: Paris" value="\${s.city || ''}" onchange="updateDayCity('\${day}')">
           </div>
           <div class="form-group" style="flex: 1.5; margin-bottom: 0;">
             <label>Adresse complète d'installation</label>
-            <input type="text" class="form-control" id="sched-addr-${day}" placeholder="Ex: 12 Place de la Mairie" value="${s.address || ''}" onchange="updateDayAddress('${day}')">
+            <input type="text" class="form-control" id="sched-addr-\${day}" placeholder="Ex: 12 Place de la Mairie" value="\${s.address || ''}" onchange="updateDayAddress('\${day}')">
           </div>
         </div>
-        <button type="button" class="btn-map-select" onclick="openLocationPickerModal('${day}')" style="width: 100%; justify-content: center; margin-top: 0.25rem;">
+        <button type="button" class="btn-map-select" onclick="openLocationPickerModal('\${day}')" style="width: 100%; justify-content: center; margin-top: 0.25rem;">
           🗺️ Positionner sur la carte
         </button>
       </div>
@@ -940,11 +944,11 @@ function renderVendorScheduleList() {
 window.toggleDayActive = async function(day) {
   if (!currentUser || currentUser === "admin") return;
 
-  const activeCheckbox = document.getElementById(`sched-active-${day}`);
+  const activeCheckbox = document.getElementById(`sched-active-\${day}`);
   const active = activeCheckbox.checked;
 
   // Toggle CSS class
-  const card = document.getElementById(`schedule-card-${day}`);
+  const card = document.getElementById(`schedule-card-\${day}`);
   if (active) {
     card.classList.add("active");
     card.querySelector(".switch-label").innerText = "Ouvert";
@@ -969,8 +973,8 @@ window.toggleDayActive = async function(day) {
 };
 
 window.updateDayTimes = async function(day) {
-  const openTime = document.getElementById(`sched-open-${day}`).value;
-  const closeTime = document.getElementById(`sched-close-${day}`).value;
+  const openTime = document.getElementById(`sched-open-\${day}`).value;
+  const closeTime = document.getElementById(`sched-close-\${day}`).value;
 
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex !== -1) {
@@ -982,7 +986,7 @@ window.updateDayTimes = async function(day) {
 };
 
 window.updateDayCity = async function(day) {
-  const city = document.getElementById(`sched-city-${day}`).value.trim();
+  const city = document.getElementById(`sched-city-\${day}`).value.trim();
 
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex !== -1) {
@@ -993,7 +997,7 @@ window.updateDayCity = async function(day) {
 };
 
 window.updateDayAddress = async function(day) {
-  const addr = document.getElementById(`sched-addr-${day}`).value.trim();
+  const addr = document.getElementById(`sched-addr-\${day}`).value.trim();
 
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex !== -1) {
@@ -1081,10 +1085,10 @@ window.confirmModalLocation = async function() {
     await saveVendors();
 
     // Update screen DOM values
-    document.getElementById(`sched-addr-${activeModalDay}`).value = addrVal;
-    document.getElementById(`sched-city-${activeModalDay}`).value = cityVal;
+    document.getElementById(`sched-addr-\${activeModalDay}`).value = addrVal;
+    document.getElementById(`sched-city-\${activeModalDay}`).value = cityVal;
     
-    showToast(`Position enregistrée pour ${activeModalDay} !`);
+    showToast(`Position enregistrée pour \${activeModalDay} !`);
     closeLocationModal();
   }
 };
@@ -1095,7 +1099,7 @@ window.searchModalAddress = async function() {
   if (!query) return;
 
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=fr&q=${encodeURIComponent(query)}`);
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=fr&q=\${encodeURIComponent(query)}`);
     if (res.ok) {
       const results = await res.json();
       if (results && results.length > 0) {
@@ -1250,7 +1254,7 @@ window.adminSaveSlots = async function() {
   input.value = val;
   saveSlotsTaken(val);
   adminSyncSlotPreview();
-  showToast(`Compteur mis à jour : ${PARTNER_SLOTS_TOTAL - val} place(s) restante(s) affichées.`);
+  showToast(`Compteur mis à jour : \${PARTNER_SLOTS_TOTAL - val} place(s) restante(s) affichées.`);
 };
 
 // Initialise le champ admin avec la valeur stockée
@@ -1273,34 +1277,35 @@ window.handlePartnerRequest = function(e) {
   const cuisine    = document.getElementById("partner-cuisine").value.trim();
   const message    = document.getElementById("partner-message").value.trim();
 
-  const remaining = PARTNER_SLOTS_TOTAL - PARTNER_SLOTS_TAKEN;
+  const taken = getSlotsTaken();
+  const remaining = PARTNER_SLOTS_TOTAL - taken;
   const offerLine = remaining > 0
-    ? `Offre demandée : ACCÈS GRATUIT (place fondateur — ${remaining} restantes)`
+    ? `Offre demandée : ACCÈS GRATUIT (place fondateur — \${remaining} restantes)`
     : "Offre demandée : Standard 30 €/an";
 
-  const subject = encodeURIComponent(`[TruckLocate] Demande partenariat — ${truckName}`);
+  const subject = encodeURIComponent(`[TruckLocate] Demande partenariat — \${truckName}`);
 
   const body = encodeURIComponent(
 `Nouvelle demande de partenariat TruckLocate
 ============================================
 
-🚚 Nom du foodtruck  : ${truckName}
-👤 Responsable       : ${ownerName}
-✉️  E-mail            : ${email}
-📞 Téléphone         : ${phone}
-📍 Ville(s)          : ${city}
-🍽️  Cuisine           : ${cuisine || "Non précisé"}
+🚚 Nom du foodtruck  : \${truckName}
+👤 Responsable       : \${ownerName}
+✉️  E-mail            : \${email}
+📞 Téléphone         : \${phone}
+📍 Ville(s)          : \${city}
+🍽️  Cuisine           : \${cuisine || "Non précisé"}
 
 💬 Message :
-${message || "Aucun message."}
+\${message || "Aucun message."}
 
 ---
-${offerLine}
+\${offerLine}
 Envoyé depuis la page "Devenir Partenaire" de TruckLocate.`
   );
 
   // Ouvre le client mail avec les infos pré-remplies
-  window.location.href = `mailto:minio.berger@gmail.com?subject=${subject}&body=${body}`;
+  window.location.href = `mailto:minio.berger@gmail.com?subject=\${subject}&body=\${body}`;
 
   // Affiche le message de confirmation après un court délai
   setTimeout(() => {
@@ -1426,12 +1431,13 @@ window.addEventListener("appinstalled", () => {
       header.style.pointerEvents = "none";
     }
     if (search) {
-      search.style.transition = "transform 0.35s ease, opacity 0.35s ease, max-height 0.35s ease";
+      search.style.transition = "transform 0.35s ease, opacity 0.35s ease, max-height 0.35s ease, padding 0.35s ease";
       search.style.transform  = "translateY(-10px)";
       search.style.opacity    = "0";
       search.style.maxHeight  = "0";
-      search.style.overflow   = "hidden";
       search.style.padding    = "0";
+      search.style.overflow   = "hidden";
+      setTimeout(() => { if(hidden && search) search.style.display = "none"; }, 300);
     }
     if (btn) {
       btn.style.transition = "opacity 0.3s ease";
@@ -1450,11 +1456,16 @@ window.addEventListener("appinstalled", () => {
       header.style.pointerEvents = "";
     }
     if (search) {
-      search.style.transform  = "";
-      search.style.opacity    = "";
-      search.style.maxHeight  = "";
-      search.style.overflow   = "";
-      search.style.padding    = "";
+      search.style.display    = "flex";
+      setTimeout(() => {
+        if (!hidden && search) {
+          search.style.transform  = "";
+          search.style.opacity    = "";
+          search.style.maxHeight  = "";
+          search.style.overflow   = "";
+          search.style.padding    = "";
+        }
+      }, 10);
     }
     if (btn) {
       btn.style.opacity    = "";
@@ -1497,7 +1508,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   DAYS_OF_WEEK.forEach(day => {
     const chip = document.createElement("button");
     chip.type = "button";
-    chip.className = `day-chip ${day === selectedDay ? 'active' : ''}`;
+    chip.className = `day-chip \${day === selectedDay ? 'active' : ''}`;
     chip.dataset.day = day;
     chip.innerText = day;
     chip.addEventListener("click", () => selectClientDay(day));
@@ -1518,7 +1529,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   rangeSlider.addEventListener("input", (e) => {
     clientDistanceMax = parseInt(e.target.value);
-    distanceValue.innerText = `${clientDistanceMax} km`;
+    distanceValue.innerText = `\${clientDistanceMax} km`;
     renderClientResults();
   });
 
@@ -1528,3 +1539,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Load default Client view
   switchTab("client");
 });
+"""
+
+with open("script.js", "w", encoding="utf-8") as f:
+    f.write(js_code)
+
+print("Script compiled successfully.")
