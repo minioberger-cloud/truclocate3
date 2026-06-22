@@ -380,6 +380,34 @@ function renderClientResults() {
   if (window.attachHeaderHideListener) window.attachHeaderHideListener();
 }
 
+// Toggle carte sur mobile
+window.toggleMobileMap = function() {
+  if (window.innerWidth > 768) return;
+
+  const mapContainer = document.querySelector(".map-container");
+  const sidebar      = document.querySelector(".sidebar");
+  const btn          = document.getElementById("map-toggle-btn");
+  if (!mapContainer || !sidebar) return;
+
+  const isVisible = mapContainer.classList.contains("map-visible");
+
+  if (isVisible) {
+    // Cacher la carte
+    mapContainer.classList.remove("map-visible");
+    sidebar.classList.remove("map-visible-sibling");
+    btn.innerHTML = "🗺️ Voir sur la carte";
+  } else {
+    // Afficher la carte
+    mapContainer.classList.add("map-visible");
+    sidebar.classList.add("map-visible-sibling");
+    btn.innerHTML = "📋 Voir la liste";
+    // Forcer Leaflet à recalculer sa taille
+    setTimeout(() => {
+      if (clientMap) clientMap.invalidateSize();
+    }, 50);
+  }
+};
+
 // Client Detail Modal
 window.openTruckDetailModal = function(vendorId) {
   const vendor = vendors.find(v => v.id === vendorId);
