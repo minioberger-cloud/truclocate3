@@ -1,37 +1,130 @@
 // ==========================================================================
-// STATE MANAGEMENT & LOCAL STORAGE INITIALIZATION
+// FIREBASE CONFIGURATION & INITIALIZATION
+// ==========================================================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDocs,
+  setDoc,
+  deleteDoc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAxV7HqiF3IEDY5SnHgBBWLvbgc8xqJ3rg",
+  authDomain: "trucklocate-2e5ee.firebaseapp.com",
+  projectId: "trucklocate-2e5ee",
+  storageBucket: "trucklocate-2e5ee.firebasestorage.app",
+  messagingSenderId: "419821613849",
+  appId: "1:419821613849:web:c13b6339e6c0ae284bcb88"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+const vendorsCol = collection(db, "vendors");
+const settingsDoc = doc(db, "settings", "global");
+
+// ==========================================================================
+// STATE MANAGEMENT
 // ==========================================================================
 
 let vendors = [];
-let currentUser = null; // Can be 'admin' or a vendor object
-let clientSearchCoords = { lat: 48.8566, lng: 2.3522 }; // Default Paris
-let clientDistanceMax = 10; // Default 10 km (range 5 to 10 km)
-let selectedDay = ""; // Active day of the week (French)
+let currentUser = null;
+let clientSearchCoords = { lat: 48.8566, lng: 2.3522 };
+let clientDistanceMax = 10;
+let selectedDay = "";
 let searchHomeMarker = null;
 let clientMarkersList = [];
 
-// Maps
 let clientMap = null;
 let modalMap = null;
 let modalMarker = null;
-let activeModalDay = null; // The day currently being configured in the modal
+let activeModalDay = null;
 
 const DAYS_OF_WEEK = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
-// Initialize Database
-function initDatabase() {
-  const storedVendors = localStorage.getItem("foodtruck_vendors");
-  if (storedVendors) {
-    vendors = JSON.parse(storedVendors);
-  } else {
-    // Load from window.INITIAL_VENDORS from mockData.js
-    vendors = window.INITIAL_VENDORS || [];
-    saveVendors();
+// --------------------------------------------------------------------------
+// Chargement initial depuis Firestore
+// --------------------------------------------------------------------------
+async function initDatabase() {
+  showToast("⏳ Chargement des données...", "info");
+  try {
+    const snapshot = await getDocs(vendorsCol);
+    if (snapshot.empty) {
+      // Première utilisation : on importe les données de mockData.js
+      console.log("[Firebase] Collection vide — import des données initiales");
+      vendors = window.INITIAL_VENDORS || [];
+      await Promise.all(vendors.map(v => setDoc(doc(db, "vendors", v.id), v)));
+      showToast("✅ Données initialisées !");
+    } else {
+      vendors = snapshot.docs.map(d => d.data());
+      showToast("✅ Données chargées !");
+    }
+  } catch (err) {
+    console.error("[Firebase] Erreur chargement :", err);
+    // Fallback localStorage si hors-ligne
+    const stored = localStorage.getItem("foodtruck_vendors");
+    vendors = stored ? JSON.parse(stored) : (window.INITIAL_VENDORS || []);
+    showToast("⚠️ Mode hors-ligne", "error");
   }
 }
 
-function saveVendors() {
-  localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
+// --------------------------------------------------------------------------
+// Sauvegarde d'un vendor dans Firestore
+// --------------------------------------------------------------------------
+async function saveVendor(vendor) {
+  try {
+    await setDoc(doc(db, "vendors", vendor.id), vendor);
+    // Cache local pour le mode hors-ligne
+    localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
+  } catch (err) {
+    console.error("[Firebase] Erreur sauvegarde :", err);
+    showToast("⚠️ Erreur de sauvegarde", "error");
+  }
+}
+
+// --------------------------------------------------------------------------
+// Suppression d'un vendor dans Firestore
+// --------------------------------------------------------------------------
+async function deleteVendorFromDB(vendorId) {
+  try {
+    await deleteDoc(doc(db, "vendors", vendorId));
+    localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
+  } catch (err) {
+    console.error("[Firebase] Erreur suppression :", err);
+  }
+}
+
+// --------------------------------------------------------------------------
+// Compatibilité — saveVendors() sauvegarde tous les vendors
+// (appelé depuis les fonctions qui modifient le tableau entier)
+// --------------------------------------------------------------------------
+async function saveVendors() {
+  try {
+    await Promise.all(vendors.map(v => setDoc(doc(db, "vendors", v.id), v)));
+    localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
+  } catch (err) {
+    console.error("[Firebase] Erreur saveVendors :", err);
+  }
+}
+
+// --------------------------------------------------------------------------
+// Écoute temps réel — met à jour l'UI si un autre appareil modifie les données
+// --------------------------------------------------------------------------
+function listenVendors() {
+  onSnapshot(vendorsCol, (snapshot) => {
+    vendors = snapshot.docs.map(d => d.data());
+    localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
+    // Rafraîchit la vue courante si on est sur la carte client
+    if (document.getElementById("view-client").classList.contains("active")) {
+      renderClientResults();
+    }
+    if (document.getElementById("view-admin").classList.contains("active")) {
+      renderAdminVendors();
+    }
+  });
 }
 
 // Get day name in French
@@ -535,20 +628,18 @@ function renderAdminVendors() {
   });
 }
 
-window.saveAdminPhone = function(vendorId) {
+window.saveAdminPhone = async function(vendorId) {
   const input = document.getElementById(`admin-phone-${vendorId}`);
   if (!input) return;
-
   const phone = input.value.trim();
   const vIndex = vendors.findIndex(v => v.id === vendorId);
   if (vIndex === -1) return;
-
   vendors[vIndex].phone = phone;
-  saveVendors();
+  await saveVendor(vendors[vIndex]);
   showToast(`Téléphone mis à jour : ${phone || "effacé"}`);
 };
 
-function handleCreateVendor(e) {
+async function handleCreateVendor(e) {
   e.preventDefault();
   const name = document.getElementById("admin-v-name").value.trim();
   const username = document.getElementById("admin-v-username").value.trim().toLowerCase();
@@ -587,7 +678,7 @@ function handleCreateVendor(e) {
   };
 
   vendors.push(newVendor);
-  saveVendors();
+  await saveVendor(newVendor);
   renderAdminVendors();
   showToast(`Partenaire "${name}" créé avec succès !`);
   
@@ -595,10 +686,10 @@ function handleCreateVendor(e) {
   document.getElementById("admin-create-form").reset();
 }
 
-window.deleteVendor = function(vendorId) {
+window.deleteVendor = async function(vendorId) {
   if (confirm("Êtes-vous sûr de vouloir supprimer ce partenaire ? Toutes ses données seront perdues.")) {
     vendors = vendors.filter(v => v.id !== vendorId);
-    saveVendors();
+    await deleteVendorFromDB(vendorId);
     renderAdminVendors();
     showToast("Partenaire supprimé avec succès.");
   }
@@ -685,7 +776,7 @@ function renderVendorDashboard() {
 }
 
 // ✅ Profile Save — inclut maintenant le téléphone
-function saveVendorProfile(e) {
+async function saveVendorProfile(e) {
   e.preventDefault();
   if (!currentUser || currentUser === "admin") return;
 
@@ -695,14 +786,11 @@ function saveVendorProfile(e) {
   vendors[index].name = document.getElementById("v-profile-name").value.trim();
   vendors[index].description = document.getElementById("v-profile-desc").value.trim();
   vendors[index].image = document.getElementById("v-profile-image-url").value.trim();
-  // ✅ Sauvegarde du numéro de téléphone
   vendors[index].phone = document.getElementById("v-profile-phone").value.trim();
 
-  // Update current user copy too
   currentUser = vendors[index];
-  
-  saveVendors();
-  updateAuthUI(); // Update logo text/badge if name changed
+  await saveVendor(vendors[index]);
+  updateAuthUI();
   showToast("Profil enregistré avec succès.");
 }
 
@@ -746,7 +834,7 @@ function renderVendorMenuList() {
   });
 }
 
-function handleAddMenuItem(e) {
+async function handleAddMenuItem(e) {
   e.preventDefault();
   if (!currentUser || currentUser === "admin") return;
 
@@ -771,8 +859,7 @@ function handleAddMenuItem(e) {
 
   vendors[index].menu.push(newItem);
   currentUser = vendors[index];
-  
-  saveVendors();
+  await saveVendor(vendors[index]);
   renderVendorMenuList();
   showToast(`"${name}" ajouté au menu !`);
 
@@ -780,7 +867,7 @@ function handleAddMenuItem(e) {
   document.getElementById("vendor-menu-form").reset();
 }
 
-window.deleteMenuItem = function(itemId) {
+window.deleteMenuItem = async function(itemId) {
   if (!currentUser || currentUser === "admin") return;
 
   const index = vendors.findIndex(v => v.id === currentUser.id);
@@ -789,7 +876,7 @@ window.deleteMenuItem = function(itemId) {
   vendors[index].menu = vendors[index].menu.filter(item => item.id !== itemId);
   currentUser = vendors[index];
 
-  saveVendors();
+  await saveVendor(vendors[index]);
   renderVendorMenuList();
   showToast("Article supprimé.");
 };
@@ -850,7 +937,7 @@ function renderVendorScheduleList() {
   });
 }
 
-window.toggleDayActive = function(day) {
+window.toggleDayActive = async function(day) {
   if (!currentUser || currentUser === "admin") return;
 
   const activeCheckbox = document.getElementById(`sched-active-${day}`);
@@ -869,50 +956,44 @@ window.toggleDayActive = function(day) {
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex !== -1) {
     vendors[vIndex].schedule[day].active = active;
-    
-    // Set default times if blank
     if (active) {
       if (!vendors[vIndex].schedule[day].openTime) vendors[vIndex].schedule[day].openTime = "11:30";
       if (!vendors[vIndex].schedule[day].closeTime) vendors[vIndex].schedule[day].closeTime = "22:00";
     }
-
     currentUser = vendors[vIndex];
-    saveVendors();
+    await saveVendor(vendors[vIndex]);
   }
 };
 
-window.updateDayTimes = function(day) {
+window.updateDayTimes = async function(day) {
   const openTime = document.getElementById(`sched-open-${day}`).value;
   const closeTime = document.getElementById(`sched-close-${day}`).value;
-
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex !== -1) {
     vendors[vIndex].schedule[day].openTime = openTime;
     vendors[vIndex].schedule[day].closeTime = closeTime;
     currentUser = vendors[vIndex];
-    saveVendors();
+    await saveVendor(vendors[vIndex]);
   }
 };
 
-window.updateDayCity = function(day) {
+window.updateDayCity = async function(day) {
   const city = document.getElementById(`sched-city-${day}`).value.trim();
-
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex !== -1) {
     vendors[vIndex].schedule[day].city = city;
     currentUser = vendors[vIndex];
-    saveVendors();
+    await saveVendor(vendors[vIndex]);
   }
 };
 
-window.updateDayAddress = function(day) {
+window.updateDayAddress = async function(day) {
   const addr = document.getElementById(`sched-addr-${day}`).value.trim();
-
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex !== -1) {
     vendors[vIndex].schedule[day].address = addr;
     currentUser = vendors[vIndex];
-    saveVendors();
+    await saveVendor(vendors[vIndex]);
   }
 };
 
@@ -970,7 +1051,7 @@ window.closeLocationModal = function() {
 };
 
 // Save coordinate confirmation from Modal Picker
-window.confirmModalLocation = function() {
+window.confirmModalLocation = async function() {
   if (!activeModalDay || !currentUser) return;
 
   const latVal = parseFloat(document.getElementById("modal-lat").value);
@@ -989,9 +1070,8 @@ window.confirmModalLocation = function() {
     vendors[vIndex].schedule[activeModalDay].lng = lngVal;
     vendors[vIndex].schedule[activeModalDay].address = addrVal;
     vendors[vIndex].schedule[activeModalDay].city = cityVal;
-    
     currentUser = vendors[vIndex];
-    saveVendors();
+    await saveVendor(vendors[vIndex]);
 
     // Update screen DOM values
     document.getElementById(`sched-addr-${activeModalDay}`).value = addrVal;
@@ -1112,14 +1192,21 @@ function saveSlotsTaken(value) {
   localStorage.setItem("partner_slots_taken", String(value));
 }
 
-function initPartnerCounter() {
-  const taken = getSlotsTaken();
+async function initPartnerCounter() {
+  let taken = getSlotsTaken(); // valeur locale par défaut
+  try {
+    const { getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const snap = await getDoc(settingsDoc);
+    if (snap.exists() && snap.data().partnerSlotsTaken !== undefined) {
+      taken = snap.data().partnerSlotsTaken;
+      localStorage.setItem("partner_slots_taken", String(taken));
+    }
+  } catch(e) { /* utilise valeur locale */ }
+
   const remaining = Math.max(0, PARTNER_SLOTS_TOTAL - taken);
   const pct = Math.min(100, (taken / PARTNER_SLOTS_TOTAL) * 100);
-
   const digitEl = document.getElementById("partner-slots-remaining");
   const barEl   = document.getElementById("partner-bar-fill");
-
   if (digitEl) digitEl.innerText = remaining;
   if (barEl) setTimeout(() => { barEl.style.width = pct + "%"; }, 120);
 }
@@ -1150,12 +1237,18 @@ window.adminSlotDecrement = function() {
   adminSyncSlotPreview();
 };
 
-window.adminSaveSlots = function() {
+window.adminSaveSlots = async function() {
   const input = document.getElementById("admin-slots-taken");
   if (!input) return;
   const val = Math.max(0, Math.min(100, parseInt(input.value) || 0));
   input.value = val;
-  saveSlotsTaken(val);
+  // Sauvegarde dans Firestore ET localStorage
+  try {
+    await setDoc(settingsDoc, { partnerSlotsTaken: val }, { merge: true });
+  } catch(e) {
+    console.warn("Firestore settings:", e);
+  }
+  localStorage.setItem("partner_slots_taken", String(val));
   adminSyncSlotPreview();
   showToast(`Compteur mis à jour : ${PARTNER_SLOTS_TOTAL - val} place(s) restante(s) affichées.`);
 };
@@ -1310,8 +1403,9 @@ window.addEventListener("appinstalled", () => {
 // INITIALISATION
 // ==========================================================================
 
-document.addEventListener("DOMContentLoaded", () => {
-  initDatabase();
+document.addEventListener("DOMContentLoaded", async () => {
+  await initDatabase();
+  listenVendors(); // écoute temps réel Firestore
   
   // Set selected day to current day on page load
   selectedDay = getCurrentFrenchDay();
