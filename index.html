@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
   
   <!-- SEO Meta Tags -->
   <title>Foodtrucks France | Localisateur en Temps Réel</title>
@@ -479,7 +479,7 @@
 
                 <div class="form-group">
                   <label for="v-profile-phone">📞 Numéro de téléphone (Commandes)</label>
-                  <input type="tel" id="v-profile-phone" class="form-control" placeholder="Ex: 06 12 34 56 78">
+                  <input type="tel" id="v-profile-phone" class="form-control" placeholder="Ex: 06 12 34 56 78" inputmode="tel">
                 </div>
                 
                 <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.5rem;">
@@ -505,7 +505,7 @@
                     <input type="text" id="new-menu-name" class="form-control" placeholder="Nom du plat (ex: Le Cheeseburger)" required>
                   </div>
                   <div class="form-group" style="margin-bottom: 0;">
-                    <input type="number" id="new-menu-price" class="form-control" placeholder="Prix (€)" step="0.01" min="0" required>
+                    <input type="number" id="new-menu-price" class="form-control" placeholder="Prix (€)" step="0.01" min="0" inputmode="decimal" required>
                   </div>
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
@@ -744,7 +744,7 @@
               </div>
               <div class="form-group">
                 <label for="partner-phone">📞 Numéro de téléphone <span style="color:#ef4444">*</span></label>
-                <input type="tel" id="partner-phone" class="form-control" placeholder="Ex: 06 12 34 56 78" required>
+                <input type="tel" id="partner-phone" class="form-control" placeholder="Ex: 06 12 34 56 78" inputmode="tel" required>
               </div>
             </div>
             <div class="form-group">
