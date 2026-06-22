@@ -144,24 +144,31 @@ function showToast(message, type = "success") {
 function initClientMap() {
   if (clientMap) return;
 
+  // Force la hauteur du conteneur — height:0 en CSS car flex ne propage pas
+  const container = document.querySelector(".map-container");
+  const main = document.querySelector("main");
+  if (container && container.getBoundingClientRect().height === 0) {
+    const h = main ? main.getBoundingClientRect().height : (window.innerHeight - 82);
+    container.style.height = h + "px";
+  }
+
   clientMap = L.map("leaflet-map", {
     zoomControl: false
   }).setView([clientSearchCoords.lat, clientSearchCoords.lng], 13);
 
-  // Add zoom control at bottom-right
   L.control.zoom({ position: 'bottomright' }).addTo(clientMap);
 
-  // Dark/Sleek theme tile layer (CartoDB Dark Matter)
   L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
     subdomains: 'abcd',
     maxZoom: 20
   }).addTo(clientMap);
 
-  // Click on client map to set search location
   clientMap.on("click", (e) => {
     setClientSearchLocation(e.latlng.lat, e.latlng.lng, "Position sélectionnée sur la carte");
   });
+
+  setTimeout(() => { if (clientMap) clientMap.invalidateSize(); }, 100);
 }
 
 function initModalMap() {
@@ -1195,9 +1202,7 @@ window.switchTab = function(tabName) {
     // Invalidate Leaflet map size (crucial since it was hidden)
     setTimeout(() => {
       initClientMap();
-      if (clientMap) {
-        clientMap.invalidateSize();
-      }
+      clientMap.invalidateSize();
       renderClientResults();
     }, 100);
 
