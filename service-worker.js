@@ -3,7 +3,7 @@
 // Stratégie : Network First pour JS/HTML, Cache First pour images/fonts
 // ==========================================================================
 
-const CACHE_NAME = "trucklocate-v7";
+const CACHE_NAME = "trucklocate-v8";
 
 // Fichiers qu'on ne met JAMAIS en cache (toujours réseau)
 const NEVER_CACHE = ["/app.js", "/index.html", "/mockData.js", "/styles.css", "/manifest.json", "/service-worker.js"];
