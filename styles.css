@@ -1197,3 +1197,445 @@ input:checked + .slider:before {
 .toast-notification.active {
   transform: translateY(0);
 }
+
+/* ==========================================================================
+   RESPONSIVE MOBILE — TruckLocate
+   Breakpoints : 768px (tablette) / 480px (mobile)
+   ========================================================================== */
+
+/* ---- HEADER ---- */
+@media (max-width: 768px) {
+  header {
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .logo-text {
+    font-size: 1.1rem;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1.1rem;
+  }
+
+  /* Nav scrollable horizontalement */
+  .nav-tabs {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    padding: 0.2rem;
+    gap: 0.25rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    font-size: 0.78rem;
+    padding: 0.45rem 0.75rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .user-badge {
+    font-size: 0.8rem;
+    gap: 0.5rem;
+  }
+
+  .logout-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.78rem;
+  }
+}
+
+/* ---- MAIN HEIGHT ---- */
+@media (max-width: 768px) {
+  main {
+    height: auto;
+    min-height: calc(100vh - 110px);
+    flex-direction: column;
+  }
+}
+
+/* ---- CLIENT VIEW : sidebar au-dessus de la carte ---- */
+@media (max-width: 768px) {
+  .client-layout {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .sidebar {
+    width: 100%;
+    max-height: 55vh;
+    overflow-y: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: none;
+  }
+
+  .search-section {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  .search-title {
+    font-size: 1rem;
+  }
+
+  .results-section {
+    padding: 1rem;
+  }
+
+  /* Carte en dessous, hauteur fixe */
+  .map-container {
+    height: 45vh;
+    min-height: 280px;
+    flex-shrink: 0;
+  }
+
+  #leaflet-map {
+    height: 100%;
+  }
+
+  /* Cards trucks en grille 2 colonnes si assez large */
+  .truck-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    max-height: 60vh;
+  }
+
+  .map-container {
+    height: 40vh;
+  }
+
+  .search-input {
+    font-size: 0.85rem;
+    padding: 0.65rem 0.65rem 0.65rem 2.2rem;
+  }
+
+  .search-btn {
+    padding: 0 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .truck-card-image {
+    height: 90px;
+  }
+
+  .truck-card-title {
+    font-size: 1rem;
+  }
+}
+
+/* ---- MODALS ---- */
+@media (max-width: 768px) {
+  .modal-container {
+    width: 100%;
+    max-width: 100%;
+    height: 95vh;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    animation: slideUpModal 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideUpModal {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+
+  .modal-overlay {
+    align-items: flex-end;
+  }
+
+  .modal-header {
+    padding: 1rem;
+  }
+
+  .modal-footer {
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .modal-footer button {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  /* Modal coordonnées : stack vertical */
+  .modal-footer > div:first-child {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .detail-modal-body {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .detail-banner {
+    height: 150px;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* ---- ADMIN & VENDOR LAYOUTS ---- */
+@media (max-width: 768px) {
+  .admin-layout,
+  .vendor-layout {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .dashboard-title {
+    font-size: 1.4rem;
+  }
+
+  .dashboard-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .vendor-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card-container {
+    padding: 1.25rem;
+  }
+
+  /* Tableau admin scrollable */
+  .vendor-list-table {
+    font-size: 0.8rem;
+  }
+
+  .vendor-list-table th,
+  .vendor-list-table td {
+    padding: 0.6rem 0.5rem;
+  }
+
+  /* Champ téléphone admin plus petit */
+  #admin-slots-taken {
+    width: 56px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-container {
+    padding: 1rem;
+    border-radius: var(--radius-md);
+  }
+
+  .card-section-title {
+    font-size: 1.05rem;
+    margin-bottom: 1rem;
+  }
+
+  .btn-primary {
+    font-size: 0.9rem;
+    padding: 0.7rem 1rem;
+  }
+
+  .form-control {
+    font-size: 0.9rem;
+    padding: 0.65rem 0.85rem;
+  }
+
+  /* Menu item row : 2 colonnes au lieu de 3 */
+  .menu-item-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+}
+
+/* ---- LOGIN ---- */
+@media (max-width: 768px) {
+  .login-container {
+    margin: 2rem auto;
+    padding: 0 1rem;
+    max-width: 100%;
+  }
+
+  .auth-card {
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+  }
+
+  .auth-title {
+    font-size: 1.4rem;
+  }
+}
+
+/* ---- VENDOR SCHEDULE CARDS ---- */
+@media (max-width: 480px) {
+  .day-schedule-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .day-schedule-details {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .day-schedule-location > div:first-child {
+    flex-direction: column;
+  }
+}
+
+/* ---- PAGE PARTENAIRE ---- */
+@media (max-width: 768px) {
+  .partner-layout {
+    padding: 1rem 1rem 3rem;
+    gap: 2rem;
+  }
+
+  .partner-hero {
+    padding: 1.5rem 1rem;
+  }
+
+  .partner-hero-title {
+    font-size: 1.6rem;
+  }
+
+  .partner-hero-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .partner-counter-box {
+    padding: 1.25rem 1rem;
+  }
+
+  .partner-counter-digit {
+    font-size: 2.8rem;
+  }
+
+  .partner-features-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .partner-feature-card {
+    padding: 1rem;
+  }
+
+  .partner-feature-card h3 {
+    font-size: 0.9rem;
+  }
+
+  .partner-feature-card p {
+    font-size: 0.78rem;
+  }
+
+  .partner-pricing-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .partner-form-section {
+    padding: 1.25rem 1rem 1.5rem;
+  }
+
+  .partner-form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .partner-submit-btn {
+    font-size: 0.9rem;
+    padding: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .partner-features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .partner-hero-title {
+    font-size: 1.35rem;
+  }
+
+  .partner-pricing-price {
+    font-size: 2rem;
+  }
+}
+
+/* ---- TOAST ---- */
+@media (max-width: 480px) {
+  .toast-notification {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* ---- BANNIÈRE PWA ---- */
+@media (max-width: 480px) {
+  #pwa-install-banner > div {
+    padding: 0.75rem 1rem !important;
+    gap: 0.75rem !important;
+  }
+}
+
+/* ---- LEAFLET MOBILE ---- */
+@media (max-width: 768px) {
+  .leaflet-control-zoom {
+    display: none; /* Les pinch-to-zoom suffisent sur mobile */
+  }
+
+  .popup-container {
+    max-width: 200px;
+  }
+
+  .popup-title {
+    font-size: 0.9rem;
+  }
+
+  .popup-address,
+  .popup-hours {
+    font-size: 0.75rem;
+  }
+}
+
+/* ---- SAFE AREA iOS (notch / barre d'accueil) ---- */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  header {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .toast-notification {
+    bottom: max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem));
+  }
+}
