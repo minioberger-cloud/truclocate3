@@ -62,8 +62,9 @@ function listenVendors() {
   onSnapshot(_vendorsCol, snap => {
     vendors = snap.docs.map(d => d.data());
     _cache();
-    if (document.getElementById("view-client")?.classList.contains("active")) renderClientResults();
-    if (document.getElementById("view-admin")?.classList.contains("active"))  renderAdminVendors();
+    // Ne rafraîchit que si la carte est initialisée ET la vue active
+    if (clientMap && document.getElementById("view-client")?.classList.contains("active")) renderClientResults();
+    if (document.getElementById("view-admin")?.classList.contains("active")) renderAdminVendors();
   }, e => console.warn("[FB] onSnapshot:", e));
 }
 
