@@ -1192,10 +1192,12 @@ window.switchTab = function(tabName) {
     document.getElementById("view-client").classList.add("active");
     document.getElementById("tab-client").classList.add("active");
     
-    // Invalidate Leaflet map size (crucial since it was hidden)
+    // Initialise et force le recalcul de taille de la carte
     setTimeout(() => {
       initClientMap();
-      clientMap.invalidateSize();
+      // Double invalidateSize pour garantir le rendu correct
+      clientMap.invalidateSize({ animate: false });
+      setTimeout(() => clientMap.invalidateSize({ animate: false }), 200);
       renderClientResults();
     }, 100);
 
