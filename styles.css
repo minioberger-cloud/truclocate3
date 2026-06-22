@@ -1271,24 +1271,30 @@ input:checked + .slider:before {
    CLIENT VIEW — sidebar au-dessus, carte en dessous
    ----------------------------------------------------------------------- */
 @media (max-width: 768px) {
+  /* Layout vertical : sidebar + carte empilées, hauteur totale de l'écran */
   .client-layout {
     flex-direction: column;
-    height: auto;
-    min-height: calc(100dvh - 110px);
+    height: calc(100dvh - 110px);
+    overflow: hidden;
   }
 
-  /* Sidebar : panneau de recherche scrollable */
+  /* Sidebar : hauteur fixe avec scroll interne sur la liste */
   .sidebar {
     width: 100%;
-    height: auto;
-    max-height: 52vh;
-    overflow-y: auto;
+    height: 55vh;          /* hauteur fixe — assez pour voir plusieurs cards */
+    max-height: 55vh;
+    min-height: 200px;
+    overflow: hidden;       /* pas de scroll global sur la sidebar */
+    display: flex;
+    flex-direction: column;
     border-right: none;
     border-bottom: 1px solid var(--border-color);
     box-shadow: none;
+    flex-shrink: 0;
   }
 
   .search-section {
+    flex-shrink: 0;         /* la zone recherche ne rétrécit pas */
     padding: 0.85rem 1rem;
     gap: 0.65rem;
   }
@@ -1305,14 +1311,20 @@ input:checked + .slider:before {
     font-size: 0.85rem;
   }
 
-  .results-section { padding: 0.85rem 1rem; }
+  /* La liste de résultats prend tout l'espace restant et scrolle */
+  .results-section {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.85rem 1rem;
+    -webkit-overflow-scrolling: touch; /* scroll fluide iOS */
+  }
 
   .results-header { margin-bottom: 0.6rem; }
 
-  /* Carte fixe en bas */
+  /* Carte : prend le reste de l'écran */
   .map-container {
-    height: 48vh;
-    min-height: 260px;
+    flex: 1;
+    min-height: 200px;
     flex-shrink: 0;
   }
 
@@ -1331,8 +1343,8 @@ input:checked + .slider:before {
 }
 
 @media (max-width: 480px) {
-  .sidebar { max-height: 55vh; }
-  .map-container { height: 45vh; }
+  .client-layout { height: calc(100dvh - 120px); }
+  .sidebar { height: 58vh; max-height: 58vh; }
   .truck-card-image { height: 80px; }
 }
 
