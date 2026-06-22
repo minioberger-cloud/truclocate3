@@ -204,6 +204,7 @@ main {
 
 .view-panel.active {
   display: flex;
+  height: 100%;
 }
 
 /* ==========================================================================
@@ -533,9 +534,10 @@ main {
 }
 
 #leaflet-map {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100%;
   background-color: var(--bg-dark);
+  position: relative;
 }
 
 /* ==========================================================================
