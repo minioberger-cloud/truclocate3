@@ -1320,54 +1320,41 @@ window.addEventListener("appinstalled", () => {
 // ==========================================================================
 
 (function() {
-  let lastScrollY = 0;
-  let ticking = false;
-  const SCROLL_THRESHOLD = 40; // px avant de déclencher
+  let lastY = 0;
+  const THRESHOLD = 30;
+  const header = document.querySelector("header") || document.getElementsByTagName("header")[0];
 
-  function onResultsScroll() {
-    if (window.innerWidth > 768) return; // uniquement mobile
+  function handleScroll(e) {
+    if (window.innerWidth > 768) return;
+    const el = e.target;
+    const y = el.scrollTop;
 
-    const currentY = this.scrollTop;
-
-    if (!ticking) {
-      requestAnimationFrame(() => {
-        const header = document.querySelector("header");
-        if (!header) { ticking = false; return; }
-
-        if (currentY > lastScrollY && currentY > SCROLL_THRESHOLD) {
-          // Scroll vers le bas → cache le header
-          header.classList.add("header-hidden");
-          document.body.classList.add("header-is-hidden");
-        } else if (currentY < lastScrollY - 10 || currentY <= SCROLL_THRESHOLD) {
-          // Scroll vers le haut → montre le header
-          header.classList.remove("header-hidden");
-          document.body.classList.remove("header-is-hidden");
-        }
-
-        lastScrollY = currentY;
-        ticking = false;
-      });
-      ticking = true;
+    if (y > lastY && y > THRESHOLD) {
+      header.style.transform = "translateY(-100%)";
+      header.style.opacity = "0";
+      header.style.pointerEvents = "none";
+    } else if (y < lastY - 5 || y <= THRESHOLD) {
+      header.style.transform = "";
+      header.style.opacity = "";
+      header.style.pointerEvents = "";
     }
+    lastY = y;
   }
 
-  // Attache le listener à la section résultats (le seul élément qui scrolle)
-  function attachHeaderHideListener() {
-    const resultsEl = document.getElementById("truck-list")?.closest(".results-section");
-    if (resultsEl) {
-      resultsEl.removeEventListener("scroll", onResultsScroll);
-      resultsEl.addEventListener("scroll", onResultsScroll, { passive: true });
+  // Délégation : on écoute tous les scrolls sur document et on filtre .results-section
+  document.addEventListener("scroll", function(e) {
+    if (e.target && e.target.classList && e.target.classList.contains("results-section")) {
+      handleScroll(e);
     }
-  }
+  }, true); // capture phase pour attraper les scrolls sur éléments enfants
 
-  // Expose pour être appelé après chaque renderClientResults
-  window.attachHeaderHideListener = attachHeaderHideListener;
-
-  // Réaffiche le header quand on change d'onglet
+  // Réaffiche le header au changement d'onglet
   window.addEventListener("tabChanged", () => {
-    const header = document.querySelector("header");
-    if (header) header.classList.remove("header-hidden");
-    document.body.classList.remove("header-is-hidden");
+    if (!header) return;
+    header.style.transform = "";
+    header.style.opacity = "";
+    header.style.pointerEvents = "";
+    lastY = 0;
   });
 })();
 
