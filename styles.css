@@ -1197,3 +1197,450 @@ input:checked + .slider:before {
 .toast-notification.active {
   transform: translateY(0);
 }
+
+/* ==========================================================================
+   RESPONSIVE MOBILE — TruckLocate
+   Breakpoints : 768px (tablette) · 480px (mobile)
+   ========================================================================== */
+
+/* -----------------------------------------------------------------------
+   HEADER
+   ----------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  header {
+    padding: 0.6rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .logo-text { font-size: 1.1rem; }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1.1rem;
+  }
+
+  /* Nav scrollable horizontalement, pleine largeur */
+  .nav-tabs {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    padding: 0.2rem;
+    gap: 0.2rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.7rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+    gap: 0.3rem;
+  }
+
+  .user-badge {
+    font-size: 0.78rem;
+    gap: 0.4rem;
+  }
+
+  .logout-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* -----------------------------------------------------------------------
+   MAIN
+   ----------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  main {
+    height: auto;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  .view-panel {
+    min-height: 0;
+  }
+}
+
+/* -----------------------------------------------------------------------
+   CLIENT VIEW — sidebar au-dessus, carte en dessous
+   ----------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .client-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100dvh - 110px);
+  }
+
+  /* Sidebar : panneau de recherche scrollable */
+  .sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 52vh;
+    overflow-y: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: none;
+  }
+
+  .search-section {
+    padding: 0.85rem 1rem;
+    gap: 0.65rem;
+  }
+
+  .search-title { font-size: 0.95rem; }
+
+  .search-input {
+    font-size: 0.85rem;
+    padding: 0.65rem 0.75rem 0.65rem 2.2rem;
+  }
+
+  .search-btn {
+    padding: 0 0.85rem;
+    font-size: 0.85rem;
+  }
+
+  .results-section { padding: 0.85rem 1rem; }
+
+  .results-header { margin-bottom: 0.6rem; }
+
+  /* Carte fixe en bas */
+  .map-container {
+    height: 48vh;
+    min-height: 260px;
+    flex-shrink: 0;
+  }
+
+  #leaflet-map { height: 100%; }
+
+  /* Cards en liste simple */
+  .truck-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .truck-card-image { height: 95px; }
+  .truck-card-title { font-size: 1rem; }
+  .truck-card-content { padding: 0.75rem; }
+}
+
+@media (max-width: 480px) {
+  .sidebar { max-height: 55vh; }
+  .map-container { height: 45vh; }
+  .truck-card-image { height: 80px; }
+}
+
+/* -----------------------------------------------------------------------
+   MODALS — sheet style depuis le bas sur mobile
+   ----------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 92vh !important;
+    max-height: 92vh !important;
+    border-radius: 1.25rem 1.25rem 0 0 !important;
+    animation: sheetUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  @keyframes sheetUp {
+    from { transform: translateY(100%); opacity: 0.6; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .modal-header { padding: 1rem 1.25rem; }
+  .modal-title  { font-size: 1rem; }
+
+  /* Recherche adresse dans la modal */
+  .modal-header + div {
+    padding: 0.75rem 1rem !important;
+  }
+
+  /* Footer modal : colonnes empilées */
+  .modal-footer {
+    padding: 0.85rem 1rem;
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+    align-items: stretch !important;
+  }
+
+  .modal-footer > div {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .modal-footer > div:last-child {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+
+  .modal-footer button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Modal détail */
+  .detail-modal-body {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .detail-banner { height: 140px; }
+  .detail-desc   { font-size: 0.85rem; }
+
+  .detail-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-container { height: 96vh !important; }
+}
+
+/* -----------------------------------------------------------------------
+   ADMIN & VENDOR LAYOUTS
+   ----------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .admin-layout,
+  .vendor-layout {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .dashboard-title    { font-size: 1.35rem; }
+  .dashboard-subtitle { font-size: 0.85rem; }
+
+  .admin-grid,
+  .vendor-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+
+  /* Force le bloc compteur en pleine largeur */
+  .admin-grid > .card-container {
+    grid-column: auto !important;
+  }
+
+  .card-container {
+    padding: 1.1rem;
+    border-radius: var(--radius-md);
+  }
+
+  .card-section-title {
+    font-size: 1.05rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Tableau admin scrollable */
+  .vendor-list-table {
+    font-size: 0.78rem;
+    min-width: 480px;
+  }
+
+  .vendor-list-table th,
+  .vendor-list-table td {
+    padding: 0.5rem 0.4rem;
+  }
+
+  /* Wrapper scroll pour le tableau */
+  .card-container[style*="overflow-x"] {
+    overflow-x: auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-container { padding: 0.9rem; }
+
+  .btn-primary {
+    font-size: 0.88rem;
+    padding: 0.7rem 1rem;
+  }
+
+  .form-control {
+    font-size: 0.88rem;
+    padding: 0.6rem 0.8rem;
+  }
+
+  .menu-item-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+}
+
+/* -----------------------------------------------------------------------
+   VENDOR SCHEDULE CARDS
+   ----------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  .day-schedule-card { padding: 1rem; }
+
+  .day-schedule-header { flex-wrap: wrap; gap: 0.4rem; }
+
+  .day-schedule-details {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .day-schedule-location > div:first-child {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* -----------------------------------------------------------------------
+   LOGIN
+   ----------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .login-container {
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+    max-width: 100%;
+  }
+
+  .auth-card {
+    padding: 1.5rem 1.25rem;
+    border-radius: var(--radius-md);
+    gap: 1rem;
+  }
+
+  .auth-title { font-size: 1.35rem; }
+}
+
+/* -----------------------------------------------------------------------
+   PAGE PARTENAIRE
+   ----------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .partner-layout {
+    padding: 1rem 1rem 3rem;
+    gap: 1.75rem;
+  }
+
+  .partner-hero {
+    padding: 1.5rem 1rem;
+    border-radius: 1rem;
+  }
+
+  .partner-hero-title  { font-size: 1.55rem; }
+  .partner-hero-subtitle { font-size: 0.88rem; margin-bottom: 1.25rem; }
+
+  .partner-counter-box {
+    padding: 1.1rem 1rem;
+    max-width: 100%;
+  }
+
+  .partner-counter-digit { font-size: 2.75rem; }
+  .partner-counter-sep   { font-size: 1.6rem; }
+  .partner-counter-total { font-size: 1.6rem; }
+
+  .partner-features-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .partner-feature-card  { padding: 1rem; }
+  .partner-feature-icon  { font-size: 1.6rem; margin-bottom: 0.5rem; }
+  .partner-feature-card h3 { font-size: 0.88rem; }
+  .partner-feature-card p  { font-size: 0.78rem; }
+
+  .partner-pricing-title { font-size: 1.25rem; }
+
+  .partner-pricing-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .partner-pricing-card {
+    padding: 1.5rem 1.25rem;
+    border-radius: 1rem;
+  }
+
+  .partner-pricing-price { font-size: 2rem; }
+
+  .partner-form-section {
+    padding: 1.25rem 1rem 1.5rem;
+    border-radius: 1rem;
+  }
+
+  .partner-form-title    { font-size: 1.2rem; }
+  .partner-form-subtitle { font-size: 0.85rem; margin-bottom: 1.25rem; }
+
+  .partner-form-row {
+    grid-template-columns: 1fr !important;
+    gap: 0;
+  }
+
+  .partner-submit-btn {
+    font-size: 0.9rem;
+    padding: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .partner-features-grid  { grid-template-columns: 1fr; }
+  .partner-hero-title     { font-size: 1.3rem; }
+  .partner-pricing-price  { font-size: 1.8rem; }
+}
+
+/* -----------------------------------------------------------------------
+   TOAST
+   ----------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  .toast-notification {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    font-size: 0.82rem;
+    padding: 0.7rem 1rem;
+  }
+}
+
+/* -----------------------------------------------------------------------
+   LEAFLET MOBILE
+   ----------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  /* Zoom buttons masqués — pinch-to-zoom suffit */
+  .leaflet-control-zoom { display: none; }
+
+  .popup-container { max-width: 190px; }
+  .popup-title     { font-size: 0.88rem; }
+  .popup-address,
+  .popup-hours     { font-size: 0.74rem; }
+  .popup-btn       { font-size: 0.76rem; }
+}
+
+/* -----------------------------------------------------------------------
+   SAFE AREA iOS (notch / barre d'accueil)
+   ----------------------------------------------------------------------- */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  header {
+    padding-top: max(0.6rem, env(safe-area-inset-top));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .toast-notification {
+    bottom: max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem));
+  }
+
+  /* Sheet modal — espace pour la barre d'accueil */
+  @media (max-width: 768px) {
+    .modal-footer {
+      padding-bottom: max(0.85rem, calc(env(safe-area-inset-bottom) + 0.5rem));
+    }
+  }
+}
