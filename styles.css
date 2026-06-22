@@ -1373,6 +1373,7 @@ input:checked + .slider:before {
     font-size: 0.8rem;
     cursor: pointer;
     flex-shrink: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease, height 0.3s ease, padding 0.3s ease, margin 0.3s ease;
   }
 }
 
