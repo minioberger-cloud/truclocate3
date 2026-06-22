@@ -1,8 +1,7 @@
 // ==========================================================================
-// FIREBASE — connexion Firestore
+// FIREBASE — Firestore
 // ==========================================================================
-
-import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -14,15 +13,12 @@ const _fbApp = initializeApp({
   messagingSenderId: "419821613849",
   appId:             "1:419821613849:web:c13b6339e6c0ae284bcb88"
 });
-
 const _db         = getFirestore(_fbApp);
 const _vendorsCol = collection(_db, "vendors");
-const _settingsDoc = doc(_db, "settings", "global");
 
 // ==========================================================================
-// STATE MANAGEMENT
+// STATE
 // ==========================================================================
-
 let vendors = [];
 let currentUser = null;
 let clientSearchCoords = { lat: 48.8566, lng: 2.3522 };
@@ -30,64 +26,54 @@ let clientDistanceMax = 10;
 let selectedDay = "";
 let searchHomeMarker = null;
 let clientMarkersList = [];
-
-let clientMap   = null;
-let modalMap    = null;
-let modalMarker = null;
-let activeModalDay = null;
+let clientMap = null, modalMap = null, modalMarker = null, activeModalDay = null;
 
 const DAYS_OF_WEEK = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
-// ---------- Chargement initial ----------
+// --- Chargement initial ---
 async function initDatabase() {
   try {
     const snap = await getDocs(_vendorsCol);
     if (snap.empty) {
-      // Première utilisation : importer mockData
       vendors = window.INITIAL_VENDORS || [];
-      await Promise.all(vendors.map(v => setDoc(doc(_db, "vendors", v.id), v)));
+      for (const v of vendors) await setDoc(doc(_db, "vendors", v.id), v);
     } else {
       vendors = snap.docs.map(d => d.data());
     }
-    // Cache local pour le mode hors-ligne
     localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
-  } catch (err) {
-    console.warn("[Firebase] Erreur chargement, fallback localStorage :", err);
-    const stored = localStorage.getItem("foodtruck_vendors");
-    vendors = stored ? JSON.parse(stored) : (window.INITIAL_VENDORS || []);
+  } catch (e) {
+    console.warn("[FB] initDatabase:", e);
+    const s = localStorage.getItem("foodtruck_vendors");
+    vendors = s ? JSON.parse(s) : (window.INITIAL_VENDORS || []);
   }
 }
 
-// ---------- Écoute temps réel ----------
+// --- Écoute temps réel ---
 function listenVendors() {
-  onSnapshot(_vendorsCol, (snap) => {
+  onSnapshot(_vendorsCol, snap => {
     vendors = snap.docs.map(d => d.data());
     localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
     if (document.getElementById("view-client")?.classList.contains("active")) renderClientResults();
     if (document.getElementById("view-admin")?.classList.contains("active"))  renderAdminVendors();
-  }, (err) => console.warn("[Firebase] onSnapshot error:", err));
+  }, e => console.warn("[FB] onSnapshot:", e));
 }
 
-// ---------- Sauvegarde ----------
-async function saveVendor(vendor) {
-  try {
-    await setDoc(doc(_db, "vendors", vendor.id), vendor);
-    localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
-  } catch (err) { console.warn("[Firebase] saveVendor:", err); }
+// --- Sauvegarde d'un vendor ---
+async function saveVendor(v) {
+  try { await setDoc(doc(_db, "vendors", v.id), v); } catch(e) { console.warn("[FB] saveVendor:", e); }
+  localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
 }
 
+// --- Sauvegarde de tous les vendors (compatibilité) ---
 async function saveVendors() {
-  try {
-    await Promise.all(vendors.map(v => setDoc(doc(_db, "vendors", v.id), v)));
-    localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
-  } catch (err) { console.warn("[Firebase] saveVendors:", err); }
+  try { for (const v of vendors) await setDoc(doc(_db, "vendors", v.id), v); } catch(e) { console.warn("[FB] saveVendors:", e); }
+  localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
 }
 
-async function deleteVendorFromDB(vendorId) {
-  try {
-    await deleteDoc(doc(_db, "vendors", vendorId));
-    localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
-  } catch (err) { console.warn("[Firebase] deleteVendor:", err); }
+// --- Suppression ---
+async function deleteVendorFromDB(id) {
+  try { await deleteDoc(doc(_db, "vendors", id)); } catch(e) { console.warn("[FB] delete:", e); }
+  localStorage.setItem("foodtruck_vendors", JSON.stringify(vendors));
 }
 
 // Get day name in French
@@ -631,7 +617,7 @@ window.saveAdminPhone = async function(vendorId) {
   if (vIndex === -1) return;
 
   vendors[vIndex].phone = phone;
-  saveVendors();
+  await saveVendors();
   showToast(`Téléphone mis à jour : ${phone || "effacé"}`);
 };
 
@@ -674,7 +660,7 @@ async function handleCreateVendor(e) {
   };
 
   vendors.push(newVendor);
-  saveVendors();
+  await saveVendor(newVendor);
   renderAdminVendors();
   showToast(`Partenaire "${name}" créé avec succès !`);
   
@@ -788,7 +774,7 @@ async function saveVendorProfile(e) {
   // Update current user copy too
   currentUser = vendors[index];
   
-  saveVendors();
+  await saveVendors();
   updateAuthUI(); // Update logo text/badge if name changed
   showToast("Profil enregistré avec succès.");
 }
@@ -859,7 +845,7 @@ async function handleAddMenuItem(e) {
   vendors[index].menu.push(newItem);
   currentUser = vendors[index];
   
-  saveVendors();
+  await saveVendors();
   renderVendorMenuList();
   showToast(`"${name}" ajouté au menu !`);
 
@@ -876,7 +862,7 @@ window.deleteMenuItem = async function(itemId) {
   vendors[index].menu = vendors[index].menu.filter(item => item.id !== itemId);
   currentUser = vendors[index];
 
-  saveVendors();
+  await saveVendors();
   renderVendorMenuList();
   showToast("Article supprimé.");
 };
@@ -1448,7 +1434,7 @@ window.addEventListener("appinstalled", () => {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initDatabase();
-  listenVendors(); // écoute temps réel Firestore
+  listenVendors();
   
   // Set selected day to current day on page load
   selectedDay = getCurrentFrenchDay();
