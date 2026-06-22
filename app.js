@@ -145,11 +145,16 @@ function initClientMap() {
   if (clientMap) return;
 
   const mapEl = document.getElementById("leaflet-map");
-  if (!mapEl) return;
+  const containerEl = document.querySelector(".map-container");
+  if (!mapEl || !containerEl) return;
 
-  // Vérifie que le conteneur a une taille réelle
-  const rect = mapEl.getBoundingClientRect();
-  if (rect.width === 0 || rect.height === 0) return; // sera réessayé par tryInitMap
+  // Force la hauteur du conteneur si elle n'est pas encore calculée
+  if (containerEl.getBoundingClientRect().height === 0) {
+    const mainEl = document.querySelector("main");
+    const h = mainEl ? mainEl.getBoundingClientRect().height : window.innerHeight - 81;
+    containerEl.style.height = h + "px";
+    mapEl.style.height = h + "px";
+  }
 
   clientMap = L.map("leaflet-map", {
     zoomControl: false
@@ -166,6 +171,8 @@ function initClientMap() {
   clientMap.on("click", (e) => {
     setClientSearchLocation(e.latlng.lat, e.latlng.lng, "Position sélectionnée sur la carte");
   });
+
+  setTimeout(() => clientMap.invalidateSize({ animate: false }), 100);
 }
 
 function initModalMap() {
@@ -1195,21 +1202,13 @@ window.switchTab = function(tabName) {
   if (tabName === "client") {
     document.getElementById("view-client").classList.add("active");
     document.getElementById("tab-client").classList.add("active");
-
-    // Lance la carte — si le conteneur n'est pas encore dimensionné,
-    // on réessaie jusqu'à ce qu'elle soit créée
-    function tryInitMap(attempts) {
+    
+    // Invalidate Leaflet map size (crucial since it was hidden)
+    setTimeout(() => {
       initClientMap();
-      if (clientMap) {
-        clientMap.invalidateSize({ animate: false });
-        renderClientResults();
-        // Second invalidateSize pour s'assurer que les tuiles se chargent
-        setTimeout(() => { if (clientMap) clientMap.invalidateSize({ animate: false }); }, 300);
-      } else if (attempts > 0) {
-        setTimeout(() => tryInitMap(attempts - 1), 150);
-      }
-    }
-    setTimeout(() => tryInitMap(10), 50);
+      if (clientMap) clientMap.invalidateSize({ animate: false });
+      renderClientResults();
+    }, 100);
 
   } else if (tabName === "login") {
     document.getElementById("view-login").classList.add("active");
