@@ -1404,70 +1404,54 @@ window.addEventListener("appinstalled", () => {
 // ==========================================================================
 
 (function() {
+  let startY = 0;
   let lastY = 0;
-  const THRESHOLD = 30;
-  const header = document.querySelector("header") || document.getElementsByTagName("header")[0];
+  let ticking = false;
+  const THRESHOLD = 40;
 
-  function getBtn() { return document.getElementById("map-toggle-btn"); }
+  function getHeader() { return document.querySelector("header"); }
+  function getBtn()    { return document.getElementById("map-toggle-btn"); }
 
   function hideUI() {
-    if (header) {
-      header.style.transform = "translateY(-100%)";
-      header.style.opacity = "0";
-      header.style.pointerEvents = "none";
-    }
-    const btn = getBtn();
-    if (btn) {
-      btn.style.transform = "translateY(-8px)";
-      btn.style.opacity = "0";
-      btn.style.pointerEvents = "none";
-      btn.style.marginTop = "0";
-      btn.style.height = "0";
-      btn.style.overflow = "hidden";
-      btn.style.padding = "0";
-    }
+    const h = getHeader(), b = getBtn();
+    if (h) { h.style.transform = "translateY(-110%)"; h.style.transition = "transform 0.3s ease"; }
+    if (b) { b.style.transform = "translateY(-10px)"; b.style.opacity = "0"; b.style.pointerEvents = "none"; b.style.transition = "all 0.3s ease"; }
   }
 
   function showUI() {
-    if (header) {
-      header.style.transform = "";
-      header.style.opacity = "";
-      header.style.pointerEvents = "";
-    }
-    const btn = getBtn();
-    if (btn) {
-      btn.style.transform = "";
-      btn.style.opacity = "";
-      btn.style.pointerEvents = "";
-      btn.style.height = "";
-      btn.style.overflow = "";
-      btn.style.padding = "";
-      btn.style.marginTop = "";
-    }
+    const h = getHeader(), b = getBtn();
+    if (h) { h.style.transform = ""; }
+    if (b) { b.style.transform = ""; b.style.opacity = ""; b.style.pointerEvents = ""; }
   }
 
-  function handleScroll(e) {
+  // Touch events — plus fiables que scroll sur mobile
+  document.addEventListener("touchstart", (e) => {
+    startY = e.touches[0].clientY;
+    lastY  = startY;
+  }, { passive: true });
+
+  document.addEventListener("touchmove", (e) => {
     if (window.innerWidth > 768) return;
-    const y = e.target.scrollTop;
-
-    if (y > lastY && y > THRESHOLD) {
-      hideUI();
-    } else if (y < lastY - 5 || y <= THRESHOLD) {
-      showUI();
-    }
+    const y    = e.touches[0].clientY;
+    const diff = lastY - y; // positif = scroll vers le bas
     lastY = y;
-  }
 
-  document.addEventListener("scroll", function(e) {
-    if (e.target && e.target.classList && e.target.classList.contains("results-section")) {
-      handleScroll(e);
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        const totalDiff = startY - y;
+        if (totalDiff > THRESHOLD) {
+          hideUI();
+        } else if (totalDiff < -20) {
+          showUI();
+        }
+        ticking = false;
+      });
+      ticking = true;
     }
-  }, true);
+  }, { passive: true });
 
-  window.addEventListener("tabChanged", () => {
-    showUI();
-    lastY = 0;
-  });
+  // Réaffiche au changement d'onglet
+  window.addEventListener("tabChanged", () => { showUI(); startY = 0; lastY = 0; });
 })();
 
 // ==========================================================================
