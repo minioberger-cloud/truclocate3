@@ -383,6 +383,23 @@ function renderClientResults() {
       `;
     }
 
+    // ✅ Lien externe affiché sur la card si disponible
+    let linkHtml = "";
+    if (vendor.link) {
+      const label = vendor.link.includes("facebook")  ? "Facebook"
+                  : vendor.link.includes("instagram") ? "Instagram"
+                  : vendor.link.includes("tiktok")    ? "TikTok"
+                  : "Site web";
+      linkHtml = `
+        <a href="${vendor.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="
+          display: inline-flex; align-items: center; gap: 0.4rem;
+          background: rgba(255,255,255,0.08); color: var(--text-primary); font-weight: 600;
+          padding: 0.45rem 0.9rem; border-radius: 2rem; text-decoration: none;
+          font-size: 0.82rem; margin-top: 0.4rem; border: 1px solid rgba(255,255,255,0.12);
+        ">🔗 ${label}</a>
+      `;
+    }
+
     // Create card element
     const card = document.createElement("div");
     card.className = "truck-card";
@@ -406,6 +423,7 @@ function renderClientResults() {
           <span style="font-weight: 600; color: var(--primary);">${vendor.menu.length} plats</span>
         </div>
         ${phoneHtml}
+        ${linkHtml}
       </div>
     `;
 
@@ -484,7 +502,31 @@ window.openTruckDetailModal = function(vendorId) {
     }
   }
 
-  // ✅ Menu list — tous les plats affichés
+  // ✅ Lien externe cliquable dans la modal
+  const linkEl = document.getElementById("detail-link");
+  if (linkEl) {
+    if (vendor.link) {
+      const label = vendor.link.includes("facebook")  ? "🔵 Voir sur Facebook"
+                  : vendor.link.includes("instagram") ? "📸 Voir sur Instagram"
+                  : vendor.link.includes("tiktok")    ? "🎵 Voir sur TikTok"
+                  : "🌐 Visiter le site web";
+      linkEl.innerHTML = `
+        <a href="${vendor.link}" target="_blank" rel="noopener" style="
+          display: inline-flex; align-items: center; gap: 0.6rem;
+          background: rgba(255,255,255,0.07); color: var(--text-primary); font-weight: 700;
+          padding: 0.65rem 1.4rem; border-radius: 2rem; text-decoration: none;
+          font-size: 1rem; border: 1px solid rgba(255,255,255,0.15);
+          transition: background 0.2s;
+        " onmouseover="this.style.background='rgba(255,255,255,0.13)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">
+          ${label}
+        </a>
+      `;
+      linkEl.style.display = "block";
+    } else {
+      linkEl.innerHTML = "";
+      linkEl.style.display = "none";
+    }
+  }
   const menuContainer = document.getElementById("detail-menu-list");
   menuContainer.innerHTML = "";
   if (!vendor.menu || vendor.menu.length === 0) {
@@ -751,6 +793,7 @@ function renderVendorDashboard() {
   document.getElementById("v-profile-image-url").value = currentUser.image || "";
   // ✅ Remplir le champ téléphone
   document.getElementById("v-profile-phone").value = currentUser.phone || "";
+  document.getElementById("v-profile-link").value  = currentUser.link  || "";
 
   // Render Menu List
   renderVendorMenuList();
@@ -772,6 +815,7 @@ async function saveVendorProfile(e) {
   vendors[index].image = document.getElementById("v-profile-image-url").value.trim();
   // ✅ Sauvegarde du numéro de téléphone
   vendors[index].phone = document.getElementById("v-profile-phone").value.trim();
+  vendors[index].link  = document.getElementById("v-profile-link").value.trim();
 
   // Update current user copy too
   currentUser = vendors[index];
