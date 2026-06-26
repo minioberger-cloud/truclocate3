@@ -1776,81 +1776,91 @@ window.addEventListener("appinstalled", () => {
 // ==========================================================================
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await initDatabase();
-  listenVendors();
-  
-  // Set selected day to current day on page load
-  selectedDay = getCurrentFrenchDay();
-  
-  // Create day chips
-  const chipsContainer = document.getElementById("day-chips");
-  chipsContainer.innerHTML = "";
-  
-  DAYS_OF_WEEK.forEach(day => {
-    const chip = document.createElement("button");
-    chip.type = "button";
-    chip.className = `day-chip ${day === selectedDay ? 'active' : ''}`;
-    chip.dataset.day = day;
-    chip.innerText = day;
-    chip.addEventListener("click", () => selectClientDay(day));
-    chipsContainer.appendChild(chip);
-  });
 
-  // Wire up event listeners
-  document.getElementById("client-search-form").addEventListener("submit", handleClientSearch);
-  document.getElementById("vendor-login-form").addEventListener("submit", handleVendorLogin);
-  document.getElementById("vendor-profile-form").addEventListener("submit", saveVendorProfile);
-  document.getElementById("vendor-image-upload").addEventListener("change", handleProfileImageUpload);
-  document.getElementById("vendor-menu-form").addEventListener("submit", handleAddMenuItem);
-  document.getElementById("admin-create-form").addEventListener("submit", handleCreateVendor);
+  // ============================================================
+  // 1. CÂBLAGE UI — EN PREMIER, avant tout await
+  //    (si initDatabase() plante, les boutons fonctionnent quand même)
+  // ============================================================
 
-  // ---- Modals — câblage par ID stable (ES module safe) ----
-  document.getElementById("modal-confirm-btn")     ?.addEventListener("click", () => confirmModalLocation());
-  document.getElementById("modal-cancel-btn")      ?.addEventListener("click", () => closeLocationModal());
-  document.getElementById("modal-location-close")  ?.addEventListener("click", () => closeLocationModal());
-  document.getElementById("modal-search-btn")      ?.addEventListener("click", () => searchModalAddress());
-  document.getElementById("modal-detail-close")    ?.addEventListener("click", () => closeDetailModal());
-  document.getElementById("modal-detail-close-btn")?.addEventListener("click", () => closeDetailModal());
-
-  // Touche Entrée dans le champ de recherche modal
-  document.getElementById("modal-search-input")?.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); searchModalAddress(); }
-  });
-
-  // ---- Boutons admin — câblage par ID stable ----
-  document.getElementById("btn-slot-decrement")?.addEventListener("click", () => adminSlotDecrement());
-  document.getElementById("btn-slot-increment")?.addEventListener("click", () => adminSlotIncrement());
-  document.getElementById("btn-slot-save")     ?.addEventListener("click", () => adminSaveSlots());
-  document.getElementById("btn-csv-template")  ?.addEventListener("click", () => downloadCSVTemplate());
-  document.getElementById("csv-file-input")    ?.addEventListener("change", (e) => handleCSVFile(e));
-  document.getElementById("csv-import-btn")    ?.addEventListener("click", () => launchCSVImport());
-
-  // ---- Bouton toggle carte mobile ----
-  document.getElementById("map-toggle-btn")?.addEventListener("click", () => toggleMobileMap());
-
-  // ---- Onglets navigation ----
+  // Onglets navigation
   document.querySelectorAll("[data-tab]").forEach(btn => {
     btn.addEventListener("click", () => switchTab(btn.dataset.tab));
   });
 
-  // ---- Formulaire partenaire ----
+  // Formulaires principaux
+  document.getElementById("client-search-form") ?.addEventListener("submit", handleClientSearch);
+  document.getElementById("vendor-login-form")  ?.addEventListener("submit", handleVendorLogin);
+  document.getElementById("vendor-profile-form")?.addEventListener("submit", saveVendorProfile);
+  document.getElementById("vendor-image-upload")?.addEventListener("change", handleProfileImageUpload);
+  document.getElementById("vendor-menu-form")   ?.addEventListener("submit", handleAddMenuItem);
+  document.getElementById("admin-create-form")  ?.addEventListener("submit", handleCreateVendor);
   document.getElementById("partner-contact-form")?.addEventListener("submit", (e) => handlePartnerRequest(e));
 
-  // Range Slider text feedback
-  const rangeSlider = document.getElementById("distance-slider");
+  // Modals location picker
+  document.getElementById("modal-confirm-btn")     ?.addEventListener("click", () => confirmModalLocation());
+  document.getElementById("modal-cancel-btn")      ?.addEventListener("click", () => closeLocationModal());
+  document.getElementById("modal-location-close")  ?.addEventListener("click", () => closeLocationModal());
+  document.getElementById("modal-search-btn")      ?.addEventListener("click", () => searchModalAddress());
+  document.getElementById("modal-search-input")    ?.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); searchModalAddress(); }
+  });
+
+  // Modal détail
+  document.getElementById("modal-detail-close")    ?.addEventListener("click", () => closeDetailModal());
+  document.getElementById("modal-detail-close-btn")?.addEventListener("click", () => closeDetailModal());
+
+  // Admin — compteur places
+  document.getElementById("btn-slot-decrement")?.addEventListener("click", () => adminSlotDecrement());
+  document.getElementById("btn-slot-increment")?.addEventListener("click", () => adminSlotIncrement());
+  document.getElementById("btn-slot-save")     ?.addEventListener("click", () => adminSaveSlots());
+
+  // Admin — CSV
+  document.getElementById("btn-csv-template")?.addEventListener("click", () => downloadCSVTemplate());
+  document.getElementById("csv-file-input")  ?.addEventListener("change", (e) => handleCSVFile(e));
+  document.getElementById("csv-import-btn")  ?.addEventListener("click", () => launchCSVImport());
+
+  // Bouton toggle carte mobile
+  document.getElementById("map-toggle-btn")?.addEventListener("click", () => toggleMobileMap());
+
+  // Range slider distance
+  const rangeSlider   = document.getElementById("distance-slider");
   const distanceValue = document.getElementById("distance-value");
-  
-  rangeSlider.addEventListener("input", (e) => {
+  rangeSlider?.addEventListener("input", (e) => {
     clientDistanceMax = parseInt(e.target.value);
     distanceValue.innerText = `${clientDistanceMax} km`;
     renderClientResults();
   });
 
-  // Auth UI setup
-  updateAuthUI();
+  // Chips de jours
+  selectedDay = getCurrentFrenchDay();
+  const chipsContainer = document.getElementById("day-chips");
+  if (chipsContainer) {
+    chipsContainer.innerHTML = "";
+    DAYS_OF_WEEK.forEach(day => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = `day-chip ${day === selectedDay ? 'active' : ''}`;
+      chip.dataset.day = day;
+      chip.innerText = day;
+      chip.addEventListener("click", () => selectClientDay(day));
+      chipsContainer.appendChild(chip);
+    });
+  }
 
-  // Load default Client view
+  // Auth UI et onglet initial
+  updateAuthUI();
   switchTab("client");
+
+  // ============================================================
+  // 2. DONNÉES — après le câblage UI
+  // ============================================================
+  try {
+    await initDatabase();
+    listenVendors();
+  } catch(e) {
+    console.error("[Init] Erreur base de données:", e);
+    showToast("⚠️ Connexion base de données échouée — mode hors-ligne", "error");
+  }
 });
 
 // ==========================================================================
