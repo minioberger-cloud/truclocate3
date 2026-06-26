@@ -1176,10 +1176,10 @@ function renderSlotHTML(day, slotIndex, slot) {
         </div>
         <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
           <button type="button" class="btn-map-select" style="flex:1;justify-content:center;"
-            onclick="openLocationPickerModalSlot('${day}', ${slotIndex})">
+            data-action="open-map" data-day="${day}" data-slot="${slotIndex}">
             🗺️ Positionner sur la carte
           </button>
-          ${isSecond ? `<button type="button" onclick="removeSecondSlot('${day}')" style="
+          ${isSecond ? `<button type="button" data-action="remove-slot" data-day="${day}" style="
             background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
             color:#ef4444;border-radius:0.6rem;padding:0.45rem 0.75rem;
             font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;
@@ -1220,7 +1220,7 @@ function renderVendorScheduleList() {
         ${slotsHTML}
       </div>
       ${s.active && !hasSecondSlot ? `
-        <button type="button" onclick="addSecondSlot('${day}')" style="
+        <button type="button" data-action="add-slot" data-day="${day}" style="
           width:100%;margin-top:0.75rem;
           background:rgba(245,158,11,0.08);
           border:1px dashed rgba(245,158,11,0.4);
@@ -1238,6 +1238,23 @@ function renderVendorScheduleList() {
     container.appendChild(card);
   });
 }
+
+
+// ==========================================================================
+// DÉLÉGATION D'ÉVÉNEMENTS — Planning (évite les problèmes onclick ES module)
+// ==========================================================================
+document.addEventListener("click", function(e) {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+
+  const action  = btn.dataset.action;
+  const day     = btn.dataset.day;
+  const slotIdx = parseInt(btn.dataset.slot ?? "0");
+
+  if (action === "add-slot"    && day) { window.addSecondSlot(day); }
+  if (action === "remove-slot" && day) { window.removeSecondSlot(day); }
+  if (action === "open-map"    && day) { window.openLocationPickerModalSlot(day, slotIdx); }
+});
 
 // ---- Gestion toggle jour ----
 window.toggleDayActive = async function(day) {
