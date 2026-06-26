@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-  <!-- ========== SEO PRIMAIRE ========== -->
   <title>TruckLocate — Trouvez un Foodtruck près de chez vous en France</title>
   <meta name="description" content="Localisez les meilleurs foodtrucks en France en temps réel. Consultez les menus, horaires et emplacements mis à jour quotidiennement. Burgers, pizzas, tacos et plus.">
   <meta name="keywords" content="foodtruck, food truck, localisateur foodtruck, foodtruck paris, foodtruck lyon, foodtruck marseille, restaurant mobile, repas rapide, burger foodtruck, pizza foodtruck, france">
@@ -12,7 +11,6 @@
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://trucklocate.fr/">
 
-  <!-- ========== OPEN GRAPH (Facebook, LinkedIn, WhatsApp) ========== -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="TruckLocate">
   <meta property="og:title" content="TruckLocate — Trouvez un Foodtruck près de chez vous">
@@ -23,13 +21,11 @@
   <meta property="og:image:height" content="512">
   <meta property="og:locale" content="fr_FR">
 
-  <!-- ========== TWITTER CARD ========== -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="TruckLocate — Trouvez un Foodtruck près de chez vous">
   <meta name="twitter:description" content="Localisez les meilleurs foodtrucks en France en temps réel.">
   <meta name="twitter:image" content="https://trucklocate.fr/icons/icon-512.png">
 
-  <!-- ========== JSON-LD Schema.org ========== -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -65,13 +61,10 @@
   }
   </script>
   
-  <!-- Leaflet CSS for Interactive Maps -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   
-  <!-- Custom Stylesheet -->
   <link rel="stylesheet" href="styles.css">
 
-  <!-- ========== PWA ========== -->
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -81,7 +74,6 @@
   <meta name="msapplication-TileColor" content="#0f1117">
   <meta name="msapplication-TileImage" content="icons/icon-144.png">
 
-  <!-- Icônes Apple (iOS ne lit pas le manifest) -->
   <link rel="apple-touch-icon" href="icons/icon-152.png">
   <link rel="apple-touch-icon" sizes="72x72"  href="icons/icon-72.png">
   <link rel="apple-touch-icon" sizes="96x96"  href="icons/icon-96.png">
@@ -91,14 +83,10 @@
   <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
 
-  <!-- Splash screen iOS -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <!-- Favicon standard -->
   <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-96.png">
   <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-72.png">
-  <!-- ========== /PWA ========== -->
-
   <style>
     /* =============================================
        PAGE DEVENIR PARTENAIRE
@@ -123,7 +111,7 @@
     }
     .partner-badge-top {
       display: inline-block;
-      background: var(--primary);
+      background: var(--primary, #f59e0b);
       color: #000;
       font-weight: 700;
       font-size: 0.8rem;
@@ -174,7 +162,7 @@
     .partner-counter-digit {
       font-size: 3.5rem;
       font-weight: 900;
-      color: var(--primary);
+      color: var(--primary, #f59e0b);
       line-height: 1;
     }
     .partner-counter-sep {
@@ -195,7 +183,7 @@
     }
     .partner-counter-bar-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--primary), #fbbf24);
+      background: linear-gradient(90deg, var(--primary, #f59e0b), #fbbf24);
       border-radius: 999px;
       transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -269,7 +257,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: var(--primary);
+      color: var(--primary, #f59e0b);
       margin-bottom: 1rem;
     }
     .partner-pricing-price {
@@ -321,6 +309,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1rem;
+      margin-bottom: 1rem;
     }
     @media (max-width: 600px) {
       .partner-form-row { grid-template-columns: 1fr; }
@@ -332,6 +321,7 @@
       font-size: 1rem;
       font-weight: 700;
       letter-spacing: 0.02em;
+      cursor: pointer;
     }
 
     /* Success block */
@@ -360,21 +350,26 @@
     .tab-btn-partner {
       background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.08)) !important;
       border: 1px solid rgba(245,158,11,0.35) !important;
-      color: var(--primary) !important;
+      color: var(--primary, #f59e0b) !important;
       font-weight: 700 !important;
     }
     .tab-btn-partner:hover,
     .tab-btn-partner.active {
-      background: var(--primary) !important;
+      background: var(--primary, #f59e0b) !important;
       color: #000 !important;
+    }
+
+    /* Fallback variables if vars.css is absent */
+    :root {
+      --text-primary: #ffffff;
+      --text-secondary: #cbd5e1;
+      --text-muted: #64748b;
+      --primary: #f59e0b;
     }
   </style>
 </head>
 <body>
 
-  <!-- ==========================================================================
-       HEADER / NAVIGATION
-       ========================================================================== -->
   <header>
     <div class="logo-container">
       <div class="logo-icon">🚚</div>
@@ -399,550 +394,10 @@
       </button>
     </nav>
     
-    <!-- User connection status -->
     <div class="user-badge" id="user-badge-container" style="display: none;">
-      <!-- Dynamic login status rendered by app.js -->
-    </div>
+      </div>
   </header>
 
-  <!-- ==========================================================================
-       MAIN PANELS (SPA VIEWS)
-       ========================================================================== -->
   <main>
     
-    <!-- VIEW 1: CLIENT (Map search and result cards) -->
     <section class="view-panel active" id="view-client" aria-labelledby="tab-client">
-      <div class="client-layout">
-        <aside class="sidebar">
-          
-          <!-- Search & Filter Controls -->
-          <div class="search-section">
-            <h2 class="search-title">🌍 Où mange-t-on aujourd'hui ?</h2>
-            
-            <form id="client-search-form" class="search-box">
-              <i class="search-icon">📍</i>
-              <input type="text" id="search-input" class="search-input" placeholder="Taper une ville (ex: Lyon, Paris)..." autocomplete="off">
-              <button type="submit" id="search-btn" class="search-btn">Rechercher</button>
-            </form>
-            
-            <!-- Distance Slider (5 to 10 km restriction) -->
-            <div class="filter-group">
-              <div class="filter-label">
-                <span>Distance maximale :</span>
-                <span id="distance-value" style="color: var(--primary); font-weight: 700;">10 km</span>
-              </div>
-              <input type="range" id="distance-slider" class="range-slider" min="5" max="10" value="10" step="1">
-              <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
-                <span>5 km</span>
-                <span>10 km</span>
-              </div>
-            </div>
-            
-            <!-- Day chip list -->
-            <div class="day-selector-container">
-              <div class="filter-label">Jour recherché :</div>
-              <div class="day-chips" id="day-chips">
-                <!-- Javascript fills this dynamically -->
-              </div>
-            </div>
-          </div>
-          
-          <!-- Results list -->
-          <!-- Bouton toggle carte (mobile uniquement) -->
-          <button class="map-toggle-btn" id="map-toggle-btn" onclick="toggleMobileMap()">
-            🗺️ Voir sur la carte
-          </button>
-
-          <div class="results-section">
-            <h3 class="results-header" id="results-count">Foodtrucks ouverts</h3>
-            <div class="truck-list" id="truck-list">
-              <!-- Dynamically populated from JS -->
-            </div>
-          </div>
-        </aside>
-        
-        <!-- Interactive Map -->
-        <div class="map-container">
-          <div id="leaflet-map"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- VIEW 2: LOGIN (Admin or Vendor connection) -->
-    <section class="view-panel" id="view-login" aria-labelledby="tab-login">
-      <div class="login-container">
-        <div class="auth-card">
-          <div class="auth-header">
-            <h2 class="auth-title">Espace Professionnel</h2>
-            <p class="auth-subtitle">Partenaires et Administrateurs</p>
-          </div>
-          
-          <form id="vendor-login-form" style="display: flex; flex-direction: column; gap: 1rem;">
-            <div class="form-group">
-              <label for="login-username">Identifiant</label>
-              <input type="text" id="login-username" class="form-control" placeholder="Entrez votre identifiant" required>
-            </div>
-            
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-              <label for="login-password">Mot de passe</label>
-              <input type="password" id="login-password" class="form-control" placeholder="Entrez votre mot de passe" required>
-            </div>
-            
-            <button type="submit" class="btn-primary">
-              Se connecter
-            </button>
-          </form>
-          
-          <div style="text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
-            <span>Identifiants démos : <br><strong>admin / admin</strong> (Admin) | <strong>burger / password123</strong> (Partenaire)</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- VIEW 3: VENDOR PORTAL (Foodtruck partner dashboard) -->
-    <section class="view-panel" id="view-vendor" aria-labelledby="tab-vendor">
-      <div class="vendor-layout">
-        <div class="dashboard-header">
-          <h2 class="dashboard-title">Mon Espace Foodtruck</h2>
-          <p class="dashboard-subtitle">Gérez vos menus, photos, prix et votre planning de géolocalisation.</p>
-        </div>
-        
-        <div class="vendor-grid">
-          
-          <!-- Column 1: Info & Menu -->
-          <div style="display: flex; flex-direction: column; gap: 2rem;">
-            
-            <!-- Profile Info Card -->
-            <div class="card-container">
-              <h3 class="card-section-title">📝 Informations Commerciales</h3>
-              <form id="vendor-profile-form">
-                <div class="form-group">
-                  <label for="v-profile-name">Nom du Foodtruck</label>
-                  <input type="text" id="v-profile-name" class="form-control" required>
-                </div>
-                
-                <div class="form-group">
-                  <label for="v-profile-desc">Description courte / Spécialité</label>
-                  <textarea id="v-profile-desc" class="form-control" placeholder="Décrivez votre cuisine, vos ingrédients..."></textarea>
-                </div>
-                
-                <div class="form-group">
-                  <label for="v-profile-image-url">Photo de couverture (Lien URL)</label>
-                  <input type="url" id="v-profile-image-url" class="form-control" placeholder="https://images.unsplash.com/... (ou chargez un fichier ci-dessous)">
-                </div>
-
-                <div class="form-group">
-                  <label for="vendor-image-upload">Importer une image locale</label>
-                  <input type="file" id="vendor-image-upload" class="form-control" accept="image/*">
-                </div>
-
-                <div class="form-group">
-                  <label for="v-profile-phone">📞 Numéro de téléphone (Commandes)</label>
-                  <input type="tel" id="v-profile-phone" class="form-control" placeholder="Ex: 06 12 34 56 78">
-                </div>
-
-                <div class="form-group">
-                  <label for="v-profile-link">🔗 Lien externe (Site web, Facebook, Instagram...)</label>
-                  <input type="url" id="v-profile-link" class="form-control" placeholder="Ex: https://www.facebook.com/monFoodtruck">
-                </div>
-                
-                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.5rem;">
-                  💾 Enregistrer les informations
-                </button>
-              </form>
-            </div>
-
-            <!-- Menu Editor Card -->
-            <div class="card-container">
-              <h3 class="card-section-title">🍔 Carte & Prix</h3>
-              
-              <!-- Active Menu List -->
-              <div class="menu-list-container" id="vendor-menu-list">
-                <!-- Rendered dynamically -->
-              </div>
-              
-              <!-- Add menu item form -->
-              <form id="vendor-menu-form" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
-                <h4 style="font-size: 1rem; font-weight: 700; color: var(--primary);">Ajouter un plat</h4>
-                <div class="menu-item-row">
-                  <div class="form-group" style="margin-bottom: 0;">
-                    <input type="text" id="new-menu-name" class="form-control" placeholder="Nom du plat (ex: Le Cheeseburger)" required>
-                  </div>
-                  <div class="form-group" style="margin-bottom: 0;">
-                    <input type="number" id="new-menu-price" class="form-control" placeholder="Prix (€)" step="0.01" min="0" required>
-                  </div>
-                </div>
-                <div class="form-group" style="margin-bottom: 0;">
-                  <input type="text" id="new-menu-desc" class="form-control" placeholder="Description (ex: Steak haché, double cheddar...)">
-                </div>
-                <button type="submit" class="btn-primary" style="margin-top: 0.5rem;">
-                  ➕ Ajouter à la carte
-                </button>
-              </form>
-            </div>
-          </div>
-          
-          <!-- Column 2: Planning & Map Localisation -->
-          <div class="card-container">
-            <h3 class="card-section-title">📅 Planning & Emplacements</h3>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
-              Cochez vos jours d'ouverture et cliquez sur <strong>"Positionner"</strong> pour situer précisément votre foodtruck sur la carte pour chaque journée d'activité.
-            </p>
-            
-            <div id="vendor-schedule-container" style="display: flex; flex-direction: column; gap: 1rem;">
-              <!-- Rendered dynamically by day -->
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- VIEW 4: ADMIN PORTAL (Create new foodtrucks accounts) -->
-    <section class="view-panel" id="view-admin" aria-labelledby="tab-admin">
-      <div class="admin-layout">
-        <div class="dashboard-header">
-          <h2 class="dashboard-title">Console Administrateur</h2>
-          <p class="dashboard-subtitle">Gestion et enregistrement des nouveaux partenaires.</p>
-        </div>
-        
-        <div class="admin-grid">
-          
-          <!-- Gestion compteur places gratuites -->
-          <div class="card-container" style="grid-column: 1 / -1;">
-            <h3 class="card-section-title">🎁 Places Fondateurs Gratuites</h3>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
-              Ce compteur s'affiche en temps réel sur la page "Devenir Partenaire". Modifiez le nombre de places déjà prises pour mettre à jour l'affichage public.
-            </p>
-            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-              <div style="display: flex; flex-direction: column; gap: 0.4rem;">
-                <label style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Places déjà attribuées</label>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <button onclick="adminSlotDecrement()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:var(--text-primary);border-radius:0.4rem;width:36px;height:36px;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
-                  <input type="number" id="admin-slots-taken" min="0" max="100" value="28"
-                    style="width:70px;text-align:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:0.4rem;color:var(--text-primary);font-size:1.1rem;font-weight:700;padding:0.4rem 0.5rem;"
-                    onfocus="this.style.borderColor='var(--primary)'"
-                    onblur="this.style.borderColor='rgba(255,255,255,0.12)'"
-                  >
-                  <button onclick="adminSlotIncrement()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:var(--text-primary);border-radius:0.4rem;width:36px;height:36px;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
-                  <span style="font-size:0.9rem;color:var(--text-muted);">/ 100 places totales</span>
-                </div>
-              </div>
-              <button onclick="adminSaveSlots()" class="btn-primary" style="align-self:flex-end;padding:0.5rem 1.2rem;">
-                💾 Enregistrer
-              </button>
-              <div id="admin-slots-preview" style="
-                background: rgba(245,158,11,0.08);
-                border: 1px solid rgba(245,158,11,0.25);
-                border-radius: 0.75rem;
-                padding: 0.6rem 1.1rem;
-                font-size: 0.9rem;
-                color: var(--text-secondary);
-                align-self: flex-end;
-              ">
-                → <strong id="admin-slots-remaining-preview" style="color:var(--primary);font-size:1.1rem;"></strong> places restantes affichées publiquement
-              </div>
-            </div>
-          </div>
-
-          <!-- Form to create vendor account -->
-          <div class="card-container">
-            <h3 class="card-section-title">➕ Nouveau Partenaire</h3>
-            <form id="admin-create-form" style="display: flex; flex-direction: column; gap: 1.25rem;">
-              <div class="form-group">
-                <label for="admin-v-name">Nom de l'établissement</label>
-                <input type="text" id="admin-v-name" class="form-control" placeholder="Ex: Crep'Truck" required>
-              </div>
-              
-              <div class="form-group">
-                <label for="admin-v-username">Identifiant de connexion (Unique)</label>
-                <input type="text" id="admin-v-username" class="form-control" placeholder="Ex: crepes" required>
-              </div>
-              
-              <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label for="admin-v-password">Mot de passe partenaire</label>
-                <input type="password" id="admin-v-password" class="form-control" placeholder="Ex: motdepasse123" required>
-              </div>
-              
-              <button type="submit" class="btn-primary">
-                Créer le compte Partenaire
-              </button>
-            </form>
-          </div>
-          
-          <!-- Existing Vendor accounts list -->
-          <div class="card-container" style="overflow-x: auto;">
-            <h3 class="card-section-title">📋 Partenaires Enregistrés</h3>
-            <table class="vendor-list-table">
-              <thead>
-                <tr>
-                  <th>Nom du Truck</th>
-                  <th>Identifiant</th>
-                  <th>Carte</th>
-                  <th>📞 Téléphone</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="admin-vendor-tbody">
-                <!-- Rendered dynamically -->
-              </tbody>
-            </table>
-          </div>
-          
-        </div>
-      </div>
-    </section>
-
-    <!-- VIEW 5: DEVENIR PARTENAIRE -->
-    <section class="view-panel" id="view-partner" aria-labelledby="tab-partner">
-      <div class="partner-layout">
-
-        <!-- Hero Banner -->
-        <div class="partner-hero">
-          <div class="partner-hero-inner">
-            <div class="partner-badge-top">🚀 Offre de lancement</div>
-            <h2 class="partner-hero-title">Rejoignez TruckLocate</h2>
-            <p class="partner-hero-subtitle">La plateforme qui connecte les foodtrucks avec des milliers de clients affamés, partout en France.</p>
-
-            <!-- Compteur places gratuites -->
-            <div class="partner-counter-box">
-              <div class="partner-counter-label">Places gratuites restantes</div>
-              <div class="partner-counter-numbers">
-                <span class="partner-counter-digit" id="partner-slots-remaining">72</span>
-                <span class="partner-counter-sep">/</span>
-                <span class="partner-counter-total">100</span>
-              </div>
-              <div class="partner-counter-bar-track">
-                <div class="partner-counter-bar-fill" id="partner-bar-fill"></div>
-              </div>
-              <p class="partner-counter-note">Les <strong>100 premiers foodtrucks</strong> inscrits bénéficient d'un accès <strong>100% gratuit à vie</strong>.<br>Après ce quota : <strong>30 € / an</strong> seulement.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Avantages -->
-        <div class="partner-features-grid">
-          <div class="partner-feature-card">
-            <div class="partner-feature-icon">📍</div>
-            <h3>Visibilité géolocalisée</h3>
-            <p>Votre truck apparaît sur la carte interactive en temps réel. Les clients vous trouvent là où vous êtes, quand vous êtes ouverts.</p>
-          </div>
-          <div class="partner-feature-card">
-            <div class="partner-feature-icon">🍔</div>
-            <h3>Votre carte en ligne</h3>
-            <p>Affichez tous vos plats, prix et descriptions. Mettez à jour votre menu en quelques secondes depuis votre espace partenaire.</p>
-          </div>
-          <div class="partner-feature-card">
-            <div class="partner-feature-icon">📅</div>
-            <h3>Planning hebdomadaire</h3>
-            <p>Indiquez vos emplacements jour par jour. Vos clients savent toujours où vous trouver, même d'une semaine à l'autre.</p>
-          </div>
-          <div class="partner-feature-card">
-            <div class="partner-feature-icon">📞</div>
-            <h3>Contact direct</h3>
-            <p>Votre numéro de téléphone affiché en évidence sur votre fiche. Les commandes arrivent directement, sans intermédiaire.</p>
-          </div>
-          <div class="partner-feature-card">
-            <div class="partner-feature-icon">🖼️</div>
-            <h3>Photo de couverture</h3>
-            <p>Mettez en valeur votre truck et vos plats avec une belle photo d'ambiance qui donne envie avant même d'arriver.</p>
-          </div>
-          <div class="partner-feature-card">
-            <div class="partner-feature-icon">⚡</div>
-            <h3>Mise en ligne rapide</h3>
-            <p>Votre profil est opérationnel en moins de 24h après votre inscription. Pas de délai, pas de paperasse.</p>
-          </div>
-        </div>
-
-        <!-- Tarifs -->
-        <div class="partner-pricing-section">
-          <h3 class="partner-pricing-title">Une offre simple et transparente</h3>
-          <div class="partner-pricing-grid">
-            <div class="partner-pricing-card partner-pricing-free">
-              <div class="partner-pricing-badge">🎁 Offre Fondateurs</div>
-              <div class="partner-pricing-price">Gratuit</div>
-              <div class="partner-pricing-period">à vie · 100 premières places</div>
-              <ul class="partner-pricing-list">
-                <li>✅ Fiche géolocalisée complète</li>
-                <li>✅ Carte & menu illimités</li>
-                <li>✅ Planning 7 jours</li>
-                <li>✅ Numéro cliquable</li>
-                <li>✅ Accès prioritaire aux nouvelles fonctions</li>
-              </ul>
-            </div>
-            <div class="partner-pricing-card partner-pricing-paid">
-              <div class="partner-pricing-badge">⭐ Offre Standard</div>
-              <div class="partner-pricing-price">30 €</div>
-              <div class="partner-pricing-period">par an · après les 100 premières places</div>
-              <ul class="partner-pricing-list">
-                <li>✅ Fiche géolocalisée complète</li>
-                <li>✅ Carte & menu illimités</li>
-                <li>✅ Planning 7 jours</li>
-                <li>✅ Numéro cliquable</li>
-                <li>✅ Support par email</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <!-- Formulaire de contact -->
-        <div class="partner-form-section">
-          <h3 class="partner-form-title">Demandez votre accès partenaire</h3>
-          <p class="partner-form-subtitle">Remplissez ce formulaire et nous vous contacterons sous 24h pour créer votre compte.</p>
-
-          <form class="partner-form" id="partner-contact-form" onsubmit="handlePartnerRequest(event)">
-            <div class="partner-form-row">
-              <div class="form-group">
-                <label for="partner-truck-name">🚚 Nom de votre foodtruck <span style="color:#ef4444">*</span></label>
-                <input type="text" id="partner-truck-name" class="form-control" placeholder="Ex: Le Camion Gourmand" required>
-              </div>
-              <div class="form-group">
-                <label for="partner-owner-name">👤 Votre prénom & nom <span style="color:#ef4444">*</span></label>
-                <input type="text" id="partner-owner-name" class="form-control" placeholder="Ex: Marie Dupont" required>
-              </div>
-            </div>
-            <div class="partner-form-row">
-              <div class="form-group">
-                <label for="partner-email">✉️ Adresse e-mail <span style="color:#ef4444">*</span></label>
-                <input type="email" id="partner-email" class="form-control" placeholder="Ex: contact@monfoodtruck.fr" required>
-              </div>
-              <div class="form-group">
-                <label for="partner-phone">📞 Numéro de téléphone <span style="color:#ef4444">*</span></label>
-                <input type="tel" id="partner-phone" class="form-control" placeholder="Ex: 06 12 34 56 78" required>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="partner-city">📍 Ville(s) principale(s) d'activité <span style="color:#ef4444">*</span></label>
-              <input type="text" id="partner-city" class="form-control" placeholder="Ex: Lyon, Villeurbanne, Bron" required>
-            </div>
-            <div class="form-group">
-              <label for="partner-cuisine">🍽️ Type de cuisine / spécialité</label>
-              <input type="text" id="partner-cuisine" class="form-control" placeholder="Ex: Burgers artisanaux, Tacos mexicains, Pizza napolitaine...">
-            </div>
-            <div class="form-group">
-              <label for="partner-message">💬 Un mot sur vous (optionnel)</label>
-              <textarea id="partner-message" class="form-control" rows="3" placeholder="Parlez-nous de votre concept, vos jours d'activité habituels, ce qui vous différencie..."></textarea>
-            </div>
-            <button type="submit" class="btn-primary partner-submit-btn" id="partner-submit-btn">
-              🚀 Envoyer ma demande de partenariat
-            </button>
-          </form>
-
-          <div id="partner-success-msg" style="display:none;" class="partner-success-block">
-            <div class="partner-success-icon">🎉</div>
-            <h4>Demande envoyée avec succès !</h4>
-            <p>Nous avons bien reçu votre demande. Vous serez contacté(e) sous <strong>24h</strong> à l'adresse indiquée pour finaliser votre inscription.</p>
-            <p style="margin-top:0.5rem; font-size:0.85rem; color:var(--text-muted);">En attendant, n'hésitez pas à explorer la plateforme en tant que visiteur.</p>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-  </main>
-
-  <!-- ==========================================================================
-       MODALS
-       ========================================================================== -->
-  
-  <!-- Location Picker Modal (For Vendor Schedule) -->
-  <div class="modal-overlay" id="location-picker-modal">
-    <div class="modal-container">
-      <div class="modal-header">
-        <h3 class="modal-title">📍 Choisir la position pour le <span id="modal-day-name" style="color: var(--primary);">Jour</span></h3>
-        <button class="modal-close" onclick="closeLocationModal()">×</button>
-      </div>
-      
-      <!-- Address quick search bar within Modal -->
-      <div style="padding: 1rem 1.5rem; display: flex; gap: 0.5rem; background: rgba(255,255,255,0.01); border-bottom: 1px solid var(--border-color);">
-        <input type="text" id="modal-search-input" class="form-control" placeholder="Rechercher une adresse (ex: 12 Rue de Rivoli, Paris)..." style="flex: 1;" onkeypress="if(event.key === 'Enter') searchModalAddress()">
-        <button type="button" class="btn-primary" onclick="searchModalAddress()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Rechercher</button>
-      </div>
-      
-      <div class="modal-body">
-        <div id="modal-map"></div>
-      </div>
-      
-      <!-- Lat/Lng and Address readouts -->
-      <div class="modal-footer" style="flex-direction: column; gap: 1rem; align-items: stretch; background: rgba(255,255,255,0.01);">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="form-group" style="margin-bottom: 0;">
-            <label style="font-size: 0.8rem;">Latitude</label>
-            <input type="text" id="modal-lat" class="form-control" readonly>
-          </div>
-          <div class="form-group" style="margin-bottom: 0;">
-            <label style="font-size: 0.8rem;">Longitude</label>
-            <input type="text" id="modal-lng" class="form-control" readonly>
-          </div>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 2.5fr; gap: 1rem;">
-          <div class="form-group" style="margin-bottom: 0;">
-            <label style="font-size: 0.8rem;">Ville</label>
-            <input type="text" id="modal-city" class="form-control" placeholder="Ex: Paris">
-          </div>
-          <div class="form-group" style="margin-bottom: 0;">
-            <label style="font-size: 0.8rem;">Adresse complète d'installation</label>
-            <input type="text" id="modal-address" class="form-control" placeholder="Sélectionnez un point sur la carte...">
-          </div>
-        </div>
-        <div style="display: flex; justify-content: flex-end; gap: 1rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color);">
-          <button type="button" class="btn-secondary" onclick="closeLocationModal()">Annuler</button>
-          <button type="button" class="btn-primary" onclick="confirmModalLocation()">Confirmer la position</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Foodtruck Detail Modal (For Client Info) -->
-  <div class="modal-overlay" id="detail-modal">
-    <div class="modal-container" style="max-width: 650px; height: auto; max-height: 85vh;">
-      <div class="modal-header">
-        <h3 class="modal-title" id="detail-title">Nom du Foodtruck</h3>
-        <button class="modal-close" onclick="closeDetailModal()">×</button>
-      </div>
-      
-      <div class="detail-modal-body">
-        <div class="detail-banner" id="detail-image"></div>
-        <p class="detail-desc" id="detail-desc"></p>
-
-        <!-- ✅ NOUVEAU : Bouton téléphone cliquable -->
-        <div id="detail-phone" style="text-align: center; margin: 0.25rem 0 0.5rem 0; display: none;"></div>
-
-        <!-- ✅ NOUVEAU : Lien externe cliquable -->
-        <div id="detail-link" style="text-align: center; margin: 0 0 1rem 0; display: none;"></div>
-
-        <div class="detail-grid">
-          <div>
-            <h4 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--primary);">🍔 La Carte</h4>
-            <div class="detail-menu-list" id="detail-menu-list">
-              <!-- Rendered from JS -->
-            </div>
-          </div>
-          <div>
-            <h4 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--primary);">🕒 Planning de la semaine</h4>
-            <div class="detail-schedule-list" id="detail-schedule-list">
-              <!-- Rendered from JS -->
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="modal-footer">
-        <button type="button" class="btn-primary" onclick="closeDetailModal()">Fermer</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast notification banner -->
-  <div id="toast" class="toast-notification">Notification</div>
-
-  <!-- Leaflet Javascript for Maps -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  
-  <!-- App JS scripts -->
-  <script src="mockData.js"></script>
-  <script type="module" src="app.js"></script>
-
-</body>
-</html>
