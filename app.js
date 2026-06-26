@@ -1301,51 +1301,52 @@ function initAdminSlotsField() {
   input.addEventListener("input", adminSyncSlotPreview);
 }
 
-window.handlePartnerRequest = function(e) {
+window.handlePartnerRequest = async function(e) {
   e.preventDefault();
 
-  const truckName  = document.getElementById("partner-truck-name").value.trim();
-  const ownerName  = document.getElementById("partner-owner-name").value.trim();
-  const email      = document.getElementById("partner-email").value.trim();
-  const phone      = document.getElementById("partner-phone").value.trim();
-  const city       = document.getElementById("partner-city").value.trim();
-  const cuisine    = document.getElementById("partner-cuisine").value.trim();
-  const message    = document.getElementById("partner-message").value.trim();
+  const btn = document.getElementById("partner-submit-btn");
+  btn.disabled = true;
+  btn.innerText = "⏳ Envoi en cours...";
 
-  const remaining = PARTNER_SLOTS_TOTAL - PARTNER_SLOTS_TAKEN;
-  const offerLine = remaining > 0
-    ? `Offre demandée : ACCÈS GRATUIT (place fondateur — ${remaining} restantes)`
-    : "Offre demandée : Standard 30 €/an";
+  const taken     = getSlotsTaken();
+  const remaining = Math.max(0, PARTNER_SLOTS_TOTAL - taken);
 
-  const subject = encodeURIComponent(`[TruckLocate] Demande partenariat — ${truckName}`);
+  const templateParams = {
+    truck_name : document.getElementById("partner-truck-name").value.trim(),
+    owner_name : document.getElementById("partner-owner-name").value.trim(),
+    reply_to   : document.getElementById("partner-email").value.trim(),
+    phone      : document.getElementById("partner-phone").value.trim(),
+    city       : document.getElementById("partner-city").value.trim(),
+    cuisine    : document.getElementById("partner-cuisine").value.trim() || "Non précisé",
+    message    : document.getElementById("partner-message").value.trim() || "Aucun message.",
+    offer      : remaining > 0
+                   ? `ACCÈS GRATUIT (place fondateur — ${remaining} place(s) restante(s))`
+                   : "Offre Standard — 30 €/an",
+  };
 
-  const body = encodeURIComponent(
-`Nouvelle demande de partenariat TruckLocate
-============================================
+  try {
+    // ⚠️  Remplacez les trois valeurs ci-dessous par vos identifiants EmailJS
+    //     Créez votre compte gratuit sur https://www.emailjs.com
+    //     Service ID  → emailjs.com > Email Services > votre service Gmail
+    //     Template ID → emailjs.com > Email Templates > votre template
+    //     Public Key  → emailjs.com > Account > Public Key
+    await emailjs.send(
+      "service_abc123",
+      "template_xyz456",
+      templateParams
+    );
 
-🚚 Nom du foodtruck  : ${truckName}
-👤 Responsable       : ${ownerName}
-✉️  E-mail            : ${email}
-📞 Téléphone         : ${phone}
-📍 Ville(s)          : ${city}
-🍽️  Cuisine           : ${cuisine || "Non précisé"}
-
-💬 Message :
-${message || "Aucun message."}
-
----
-${offerLine}
-Envoyé depuis la page "Devenir Partenaire" de TruckLocate.`
-  );
-
-  // Ouvre le client mail avec les infos pré-remplies
-  window.location.href = `mailto:minio.berger@gmail.com?subject=${subject}&body=${body}`;
-
-  // Affiche le message de confirmation après un court délai
-  setTimeout(() => {
+    // ✅ Succès
     document.getElementById("partner-contact-form").style.display = "none";
-    document.getElementById("partner-success-msg").style.display = "block";
-  }, 800);
+    document.getElementById("partner-success-msg").style.display  = "block";
+    showToast("🎉 Demande envoyée avec succès !");
+
+  } catch (err) {
+    console.error("EmailJS error:", err);
+    showToast("❌ Erreur lors de l'envoi. Réessayez ou contactez minio.berger@gmail.com", "error");
+    btn.disabled  = false;
+    btn.innerText = "🚀 Envoyer ma demande de partenariat";
+  }
 };
 
 
