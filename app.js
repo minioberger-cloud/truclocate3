@@ -363,7 +363,7 @@ function renderClientResults() {
         <div style="font-size:0.75rem;color:#f59e0b;font-weight:700;margin-bottom:0.25rem;">${slotLabel}</div>
         <div class="popup-address">📍 <strong>${schedule.city || ""}</strong><br>${schedule.address || ""}</div>
         <div class="popup-hours">🕒 ${schedule.openTime} - ${schedule.closeTime}</div>
-        <button class="popup-btn" onclick="openTruckDetailModal('${vendor.id}')">Voir la Carte & Infos</button>
+        <button class="popup-btn" data-action="open-detail" data-vendor="${vendor.id}">Voir la Carte & Infos</button>
       </div>
     `;
     marker.bindPopup(popupContent);
@@ -646,7 +646,7 @@ function renderAdminVendors() {
             onblur="this.style.borderColor='rgba(255,255,255,0.1)'"
           >
           <button
-            onclick="saveAdminPhone('${vendor.id}')"
+            data-action="save-phone" data-vendor="${vendor.id}"
             title="Enregistrer le numéro"
             style="
               background: var(--primary);
@@ -666,7 +666,7 @@ function renderAdminVendors() {
         </div>
       </td>
       <td>
-        <button class="btn-icon-danger" onclick="deleteVendor('${vendor.id}')" title="Supprimer le partenaire">
+        <button class="btn-icon-danger" data-action="delete-vendor" data-vendor="${vendor.id}" title="Supprimer le partenaire">
           🗑️
         </button>
       </td>
@@ -981,7 +981,7 @@ function updateAuthUI() {
     let displayName = currentUser === "admin" ? "Administrateur" : currentUser.name;
     userBadge.innerHTML = `
       <span>Connecté : <strong style="color: var(--primary);">${displayName}</strong></span>
-      <button class="logout-btn" onclick="logout()">Déconnexion</button>
+      <button class="logout-btn" data-action="logout">Déconnexion</button>
     `;
     userBadge.style.display = "flex";
     loginTab.style.display = "none";
@@ -1078,7 +1078,7 @@ function renderVendorMenuList() {
       </div>
       <div class="menu-list-price-action">
         <span class="menu-list-price">${item.price.toFixed(2)} €</span>
-        <button class="btn-icon-danger" onclick="deleteMenuItem('${item.id}')" title="Supprimer">🗑️</button>
+        <button class="btn-icon-danger" data-action="delete-menu" data-item="${item.id}" title="Supprimer">🗑️</button>
       </div>
     `;
     container.appendChild(itemDiv);
@@ -1150,13 +1150,13 @@ function renderSlotHTML(day, slotIndex, slot) {
           <label>Heure d'ouverture</label>
           <input type="time" class="form-control" id="sched-open-${day}-${slotIndex}"
             value="${slot.openTime || (isSecond ? '18:00' : '11:00')}"
-            onchange="updateSlotTimes('${day}', ${slotIndex})">
+            data-action="slot-time" data-day="${day}" data-slot="${slotIndex}">
         </div>
         <div class="form-group">
           <label>Heure de fermeture</label>
           <input type="time" class="form-control" id="sched-close-${day}-${slotIndex}"
             value="${slot.closeTime || (isSecond ? '23:00' : '14:30')}"
-            onchange="updateSlotTimes('${day}', ${slotIndex})">
+            data-action="slot-time" data-day="${day}" data-slot="${slotIndex}">
         </div>
       </div>
       <div class="day-schedule-location" style="margin-top:0.75rem;">
@@ -1165,13 +1165,13 @@ function renderSlotHTML(day, slotIndex, slot) {
             <label>Ville</label>
             <input type="text" class="form-control" id="sched-city-${day}-${slotIndex}"
               placeholder="Ex: Paris" value="${slot.city || ''}"
-              onchange="updateSlotCity('${day}', ${slotIndex})">
+              data-action="slot-city" data-day="${day}" data-slot="${slotIndex}">
           </div>
           <div class="form-group" style="flex: 1.5; margin-bottom: 0;">
             <label>Adresse</label>
             <input type="text" class="form-control" id="sched-addr-${day}-${slotIndex}"
               placeholder="Ex: 12 Place de la Mairie" value="${slot.address || ''}"
-              onchange="updateSlotAddress('${day}', ${slotIndex})">
+              data-action="slot-addr" data-day="${day}" data-slot="${slotIndex}">
           </div>
         </div>
         <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
@@ -1211,7 +1211,7 @@ function renderVendorScheduleList() {
         <label class="switch-container">
           <span class="switch-label">${s.active ? "Ouvert" : "Fermé"}</span>
           <span class="switch">
-            <input type="checkbox" id="sched-active-${day}" ${s.active ? 'checked' : ''} onchange="toggleDayActive('${day}')">
+            <input type="checkbox" id="sched-active-${day}" ${s.active ? 'checked' : ''} data-action="toggle-day" data-day="${day}">
             <span class="slider"></span>
           </span>
         </label>
@@ -1241,19 +1241,52 @@ function renderVendorScheduleList() {
 
 
 // ==========================================================================
-// DÉLÉGATION D'ÉVÉNEMENTS — Planning (évite les problèmes onclick ES module)
+// DÉLÉGATION D'ÉVÉNEMENTS GLOBALE — couvre tout le HTML dynamique
 // ==========================================================================
+
+// --- Clicks ---
 document.addEventListener("click", function(e) {
-  const btn = e.target.closest("[data-action]");
-  if (!btn) return;
+  const el     = e.target.closest("[data-action]");
+  if (!el) return;
 
-  const action  = btn.dataset.action;
-  const day     = btn.dataset.day;
-  const slotIdx = parseInt(btn.dataset.slot ?? "0");
+  const action   = el.dataset.action;
+  const day      = el.dataset.day;
+  const slotIdx  = parseInt(el.dataset.slot  ?? "0");
+  const vendorId = el.dataset.vendor;
+  const itemId   = el.dataset.item;
 
-  if (action === "add-slot"    && day) { window.addSecondSlot(day); }
-  if (action === "remove-slot" && day) { window.removeSecondSlot(day); }
-  if (action === "open-map"    && day) { window.openLocationPickerModalSlot(day, slotIdx); }
+  switch (action) {
+    // Planning slots
+    case "add-slot":      if (day) window.addSecondSlot(day);                          break;
+    case "remove-slot":   if (day) window.removeSecondSlot(day);                       break;
+    case "open-map":      if (day) window.openLocationPickerModalSlot(day, slotIdx);   break;
+    // Admin
+    case "save-phone":    if (vendorId) window.saveAdminPhone(vendorId);               break;
+    case "delete-vendor": if (vendorId) window.deleteVendor(vendorId);                 break;
+    // Menu
+    case "delete-menu":   if (itemId)   window.deleteMenuItem(itemId);                 break;
+    // Client
+    case "open-detail":   if (vendorId) window.openTruckDetailModal(vendorId);         break;
+    // Auth
+    case "logout":        window.logout();                                              break;
+  }
+});
+
+// --- Changes (inputs/selects dans le planning) ---
+document.addEventListener("change", function(e) {
+  const el      = e.target.closest("[data-action]");
+  if (!el) return;
+
+  const action  = el.dataset.action;
+  const day     = el.dataset.day;
+  const slotIdx = parseInt(el.dataset.slot ?? "0");
+
+  switch (action) {
+    case "toggle-day": if (day) window.toggleDayActive(day);           break;
+    case "slot-time":  if (day) window.updateSlotTimes(day, slotIdx);  break;
+    case "slot-city":  if (day) window.updateSlotCity(day, slotIdx);   break;
+    case "slot-addr":  if (day) window.updateSlotAddress(day, slotIdx);break;
+  }
 });
 
 // ---- Gestion toggle jour ----
