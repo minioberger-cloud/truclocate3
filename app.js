@@ -40,7 +40,11 @@ async function initDatabase() {
       vendors = window.INITIAL_VENDORS || [];
       for (const v of vendors) await setDoc(doc(_db, "vendors", v.id), v);
     } else {
-      vendors = snap.docs.map(d => d.data());
+      vendors = snap.docs.map(d => {
+        const v = d.data();
+        v.schedule = migrateSchedule(v.schedule || {});
+        return v;
+      });
     }
     _cache();
     console.log("[FB] Chargé", vendors.length, "vendors");
@@ -305,20 +309,24 @@ function renderClientResults() {
   vendors.forEach(vendor => {
     const daySchedule = vendor.schedule[selectedDay];
     if (daySchedule && daySchedule.active) {
-      const distance = calculateDistance(
-        clientSearchCoords.lat,
-        clientSearchCoords.lng,
-        daySchedule.lat,
-        daySchedule.lng
-      );
-
-      if (distance <= clientDistanceMax) {
-        activeTrucks.push({
-          vendor,
-          schedule: daySchedule,
-          distance
-        });
-      }
+      const slots = daySchedule.slots || [];
+      slots.forEach((slot, slotIndex) => {
+        if (!slot.lat || !slot.lng) return;
+        const distance = calculateDistance(
+          clientSearchCoords.lat,
+          clientSearchCoords.lng,
+          slot.lat,
+          slot.lng
+        );
+        if (distance <= clientDistanceMax) {
+          activeTrucks.push({
+            vendor,
+            schedule: slot,
+            slotIndex,
+            distance
+          });
+        }
+      });
     }
   });
 
@@ -348,9 +356,11 @@ function renderClientResults() {
       .addTo(clientMap);
     
     // Popup template
+    const slotLabel = item.slotIndex === 1 ? '🌙 Soir' : '☀️ Midi';
     const popupContent = `
       <div class="popup-container">
         <div class="popup-title">${vendor.name}</div>
+        <div style="font-size:0.75rem;color:#f59e0b;font-weight:700;margin-bottom:0.25rem;">${slotLabel}</div>
         <div class="popup-address">📍 <strong>${schedule.city || ""}</strong><br>${schedule.address || ""}</div>
         <div class="popup-hours">🕒 ${schedule.openTime} - ${schedule.closeTime}</div>
         <button class="popup-btn" onclick="openTruckDetailModal('${vendor.id}')">Voir la Carte & Infos</button>
@@ -563,22 +573,28 @@ window.openTruckDetailModal = function(vendorId) {
     const isToday = day === currentDay;
     const row = document.createElement("div");
     row.className = `detail-schedule-row ${isToday ? 'today' : ''}`;
-    
-    let timeText = "Fermé";
-    let addrText = "";
-    if (sched && sched.active) {
-      timeText = `${sched.openTime} - ${sched.closeTime}`;
-      const locationLabel = `${sched.city || ""}${sched.city && sched.address ? ", " : ""}${sched.address || ""}`;
-      addrText = `<span style="display: block; font-size: 0.75rem; color: var(--text-muted); text-align: right; max-width: 180px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${locationLabel}">📍 ${locationLabel}</span>`;
-    }
 
-    row.innerHTML = `
-      <span>${day} ${isToday ? '(Aujourd\'hui)' : ''}</span>
-      <div style="text-align: right;">
-        <span style="font-weight: 600;">${timeText}</span>
-        ${addrText}
-      </div>
-    `;
+    if (!sched || !sched.active) {
+      row.innerHTML = `
+        <span>${day}${isToday ? ' <em style="color:var(--primary);font-size:0.78rem;">(Aujourd\'hui)</em>' : ''}</span>
+        <span style="font-weight:600;color:var(--text-muted);">Fermé</span>
+      `;
+    } else {
+      const slots = sched.slots || [];
+      const slotsHTML = slots.map((slot, i) => {
+        const t = slot.openTime && slot.closeTime ? `${slot.openTime} – ${slot.closeTime}` : "—";
+        const loc = [slot.city, slot.address].filter(Boolean).join(", ");
+        return `<div style="text-align:right;${i > 0 ? 'margin-top:0.35rem;padding-top:0.35rem;border-top:1px dashed rgba(255,255,255,0.08);' : ''}">
+          ${slots.length > 1 ? `<span style="font-size:0.7rem;color:var(--primary);font-weight:700;">${i === 0 ? '☀️ Midi' : '🌙 Soir'} </span>` : ''}
+          <span style="font-weight:600;">${t}</span>
+          ${loc ? `<span style="display:block;font-size:0.75rem;color:var(--text-muted);max-width:160px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" title="${loc}">📍 ${loc}</span>` : ''}
+        </div>`;
+      }).join("");
+      row.innerHTML = `
+        <span>${day}${isToday ? ' <em style="color:var(--primary);font-size:0.78rem;">(Aujourd\'hui)</em>' : ''}</span>
+        <div>${slotsHTML}</div>
+      `;
+    }
     scheduleContainer.appendChild(row);
   });
 
@@ -726,6 +742,203 @@ window.deleteVendor = async function(vendorId) {
     renderAdminVendors();
     showToast("Partenaire supprimé avec succès.");
   }
+};
+
+// ==========================================================================
+// IMPORT CSV PARTENAIRES
+// ==========================================================================
+
+function makeEmptySlot() {
+  return { city: "", address: "", lat: 0, lng: 0, openTime: "", closeTime: "" };
+}
+
+function makeEmptySchedule() {
+  const days = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+  const s = {};
+  days.forEach(d => { s[d] = { active: false, slots: [makeEmptySlot()] }; });
+  return s;
+}
+
+// Migration ancien format (plat) vers nouveau format slots[]
+function migrateSchedule(schedule) {
+  const days = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+  const migrated = {};
+  days.forEach(d => {
+    const old = schedule[d];
+    if (!old) { migrated[d] = { active: false, slots: [makeEmptySlot()] }; return; }
+    if (Array.isArray(old.slots)) { migrated[d] = old; return; }
+    migrated[d] = {
+      active: old.active || false,
+      slots: [{
+        city: old.city || "",
+        address: old.address || "",
+        lat: old.lat || 0,
+        lng: old.lng || 0,
+        openTime: old.openTime || "",
+        closeTime: old.closeTime || ""
+      }]
+    };
+  });
+  return migrated;
+}
+
+// Parse CSV texte → tableau d'objets
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim() !== "");
+  if (lines.length < 2) return { error: "Le fichier doit contenir un en-tête et au moins une ligne de données." };
+
+  const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+  const required = ["name", "username", "password"];
+  for (const r of required) {
+    if (!headers.includes(r)) return { error: `Colonne obligatoire manquante : "${r}"` };
+  }
+
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(",").map(c => c.trim());
+    const row = {};
+    headers.forEach((h, idx) => { row[h] = cols[idx] || ""; });
+    if (!row.name || !row.username || !row.password) continue; // ignorer lignes vides
+    rows.push(row);
+  }
+  return { rows };
+}
+
+// Affiche la prévisualisation dans l'UI
+window.handleCSVFile = function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const result = parseCSV(evt.target.result);
+    const previewBox = document.getElementById("csv-preview-box");
+    const importBtn  = document.getElementById("csv-import-btn");
+
+    if (result.error) {
+      previewBox.innerHTML = `<div style="color:#ef4444;padding:1rem;">❌ ${result.error}</div>`;
+      importBtn.style.display = "none";
+      return;
+    }
+
+    // Détection doublons username
+    const conflicts = result.rows.filter(r =>
+      vendors.some(v => v.ownerUsername === r.username.toLowerCase()) || r.username.toLowerCase() === "admin"
+    );
+
+    let html = `
+      <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.75rem;">
+        ${result.rows.length} partenaire(s) détecté(s)${conflicts.length ? ` — <span style="color:#f59e0b;">⚠️ ${conflicts.length} doublon(s) ignoré(s)</span>` : " — ✅ aucun doublon"}
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+        <thead>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+            <th style="text-align:left;padding:0.4rem 0.5rem;color:var(--text-muted);">Statut</th>
+            <th style="text-align:left;padding:0.4rem 0.5rem;color:var(--text-muted);">Nom</th>
+            <th style="text-align:left;padding:0.4rem 0.5rem;color:var(--text-muted);">Username</th>
+            <th style="text-align:left;padding:0.4rem 0.5rem;color:var(--text-muted);">Téléphone</th>
+            <th style="text-align:left;padding:0.4rem 0.5rem;color:var(--text-muted);">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    result.rows.forEach(r => {
+      const isDup = vendors.some(v => v.ownerUsername === r.username.toLowerCase()) || r.username.toLowerCase() === "admin";
+      html += `
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);opacity:${isDup ? '0.45' : '1'};">
+          <td style="padding:0.4rem 0.5rem;">${isDup ? '⚠️ Doublon' : '✅ OK'}</td>
+          <td style="padding:0.4rem 0.5rem;font-weight:600;color:var(--text-primary);">${r.name}</td>
+          <td style="padding:0.4rem 0.5rem;color:var(--text-secondary);">${r.username}</td>
+          <td style="padding:0.4rem 0.5rem;color:var(--text-secondary);">${r.phone || "—"}</td>
+          <td style="padding:0.4rem 0.5rem;color:var(--text-secondary);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.description || "—"}</td>
+        </tr>
+      `;
+    });
+
+    html += `</tbody></table>`;
+    previewBox.innerHTML = html;
+
+    // Stocker les rows valides pour import
+    const validRows = result.rows.filter(r =>
+      !vendors.some(v => v.ownerUsername === r.username.toLowerCase()) && r.username.toLowerCase() !== "admin"
+    );
+    previewBox.dataset.validRows = JSON.stringify(validRows);
+
+    importBtn.style.display = validRows.length > 0 ? "flex" : "none";
+    importBtn.innerText = `🚀 Importer ${validRows.length} partenaire(s) dans Firestore`;
+  };
+  reader.readAsText(file, "UTF-8");
+};
+
+window.launchCSVImport = async function() {
+  const previewBox = document.getElementById("csv-preview-box");
+  const importBtn  = document.getElementById("csv-import-btn");
+  const validRows  = JSON.parse(previewBox.dataset.validRows || "[]");
+
+  if (validRows.length === 0) {
+    showToast("Aucune ligne valide à importer.", "error");
+    return;
+  }
+
+  importBtn.disabled = true;
+  importBtn.innerText = `⏳ Import en cours (0 / ${validRows.length})…`;
+
+  let count = 0;
+  const errors = [];
+
+  for (const r of validRows) {
+    try {
+      const newVendor = {
+        id: "v-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+        name: r.name,
+        description: r.description || "",
+        image: r.image || "",
+        phone: r.phone || "",
+        link: r.link || "",
+        ownerUsername: r.username.toLowerCase(),
+        ownerPassword: r.password,
+        menu: [],
+        schedule: makeEmptySchedule()
+      };
+      vendors.push(newVendor);
+      await saveVendor(newVendor);
+      count++;
+      importBtn.innerText = `⏳ Import en cours (${count} / ${validRows.length})…`;
+    } catch (err) {
+      errors.push(r.username);
+      console.error("Import error:", r.username, err);
+    }
+  }
+
+  renderAdminVendors();
+  previewBox.innerHTML = `
+    <div style="padding:1.25rem;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:0.75rem;text-align:center;">
+      <div style="font-size:1.5rem;margin-bottom:0.5rem;">🎉</div>
+      <div style="font-weight:700;color:#10b981;font-size:1rem;">${count} partenaire(s) importé(s) avec succès !</div>
+      ${errors.length ? `<div style="color:#f59e0b;font-size:0.85rem;margin-top:0.5rem;">⚠️ ${errors.length} échec(s) : ${errors.join(", ")}</div>` : ""}
+    </div>
+  `;
+  previewBox.dataset.validRows = "[]";
+  importBtn.style.display = "none";
+  document.getElementById("csv-file-input").value = "";
+  showToast(`✅ ${count} partenaire(s) importé(s) dans Firestore !`);
+};
+
+// Génère et télécharge un CSV modèle
+window.downloadCSVTemplate = function() {
+  const header = "name,username,password,phone,description,link,image";
+  const examples = [
+    "Le Camion Gourmand,camion,pass123,0612345678,Burgers artisanaux maison,https://www.facebook.com/camion,",
+    "Pizza Roma,pizzaroma,roma2024,0698765432,Pizzas napolitaines au feu de bois,,",
+    "Tacos del Sol,tacosdelsol,tacos2024,0677123456,Tacos mexicains authentiques,https://www.instagram.com/tacosdelsol,"
+  ];
+  const csv = [header, ...examples].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url; a.download = "template_import_trucklocate.csv";
+  a.click(); URL.revokeObjectURL(url);
 };
 
 // ==========================================================================
@@ -921,17 +1134,77 @@ window.deleteMenuItem = async function(itemId) {
 };
 
 // Schedule Management
+function renderSlotHTML(day, slotIndex, slot) {
+  const isSecond = slotIndex === 1;
+  return `
+    <div class="day-slot-block" id="slot-block-${day}-${slotIndex}" style="
+      background: ${isSecond ? 'rgba(245,158,11,0.05)' : 'transparent'};
+      border: 1px solid ${isSecond ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.05)'};
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-top: ${isSecond ? '0.75rem' : '0'};
+    ">
+      ${isSecond ? `<div style="font-size:0.78rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">🌙 Service du soir — Emplacement B</div>` : `<div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">☀️ Service du midi — Emplacement A</div>`}
+      <div class="day-schedule-details">
+        <div class="form-group">
+          <label>Heure d'ouverture</label>
+          <input type="time" class="form-control" id="sched-open-${day}-${slotIndex}"
+            value="${slot.openTime || (isSecond ? '18:00' : '11:00')}"
+            onchange="updateSlotTimes('${day}', ${slotIndex})">
+        </div>
+        <div class="form-group">
+          <label>Heure de fermeture</label>
+          <input type="time" class="form-control" id="sched-close-${day}-${slotIndex}"
+            value="${slot.closeTime || (isSecond ? '23:00' : '14:30')}"
+            onchange="updateSlotTimes('${day}', ${slotIndex})">
+        </div>
+      </div>
+      <div class="day-schedule-location" style="margin-top:0.75rem;">
+        <div style="display: flex; gap: 0.75rem; width: 100%;">
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label>Ville</label>
+            <input type="text" class="form-control" id="sched-city-${day}-${slotIndex}"
+              placeholder="Ex: Paris" value="${slot.city || ''}"
+              onchange="updateSlotCity('${day}', ${slotIndex})">
+          </div>
+          <div class="form-group" style="flex: 1.5; margin-bottom: 0;">
+            <label>Adresse</label>
+            <input type="text" class="form-control" id="sched-addr-${day}-${slotIndex}"
+              placeholder="Ex: 12 Place de la Mairie" value="${slot.address || ''}"
+              onchange="updateSlotAddress('${day}', ${slotIndex})">
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+          <button type="button" class="btn-map-select" style="flex:1;justify-content:center;"
+            onclick="openLocationPickerModalSlot('${day}', ${slotIndex})">
+            🗺️ Positionner sur la carte
+          </button>
+          ${isSecond ? `<button type="button" onclick="removeSecondSlot('${day}')" style="
+            background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
+            color:#ef4444;border-radius:0.6rem;padding:0.45rem 0.75rem;
+            font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;
+          ">✕ Supprimer</button>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderVendorScheduleList() {
   const container = document.getElementById("vendor-schedule-container");
   container.innerHTML = "";
 
   DAYS_OF_WEEK.forEach(day => {
-    const s = currentUser.schedule[day] || { active: false, city: "", address: "", lat: 0, lng: 0, openTime: "", closeTime: "" };
-    
+    const s = currentUser.schedule[day] || { active: false, slots: [makeEmptySlot()] };
+    const slots = s.slots || [makeEmptySlot()];
+
     const card = document.createElement("div");
     card.className = `day-schedule-card ${s.active ? 'active' : ''}`;
     card.id = `schedule-card-${day}`;
-    
+
+    const slotsHTML = slots.map((slot, i) => renderSlotHTML(day, i, slot)).join("");
+    const hasSecondSlot = slots.length >= 2;
+
     card.innerHTML = `
       <div class="day-schedule-header">
         <span class="day-name">${day}</span>
@@ -943,46 +1216,33 @@ function renderVendorScheduleList() {
           </span>
         </label>
       </div>
-
-      <div class="day-schedule-details">
-        <div class="form-group">
-          <label>Heure d'ouverture</label>
-          <input type="time" class="form-control" id="sched-open-${day}" value="${s.openTime || '11:00'}" onchange="updateDayTimes('${day}')">
-        </div>
-        <div class="form-group">
-          <label>Heure de fermeture</label>
-          <input type="time" class="form-control" id="sched-close-${day}" value="${s.closeTime || '22:00'}" onchange="updateDayTimes('${day}')">
-        </div>
+      <div id="sched-slots-${day}">
+        ${slotsHTML}
       </div>
-
-      <div class="day-schedule-location">
-        <div style="display: flex; gap: 0.75rem; width: 100%;">
-          <div class="form-group" style="flex: 1; margin-bottom: 0;">
-            <label>Ville</label>
-            <input type="text" class="form-control" id="sched-city-${day}" placeholder="Ex: Paris" value="${s.city || ''}" onchange="updateDayCity('${day}')">
-          </div>
-          <div class="form-group" style="flex: 1.5; margin-bottom: 0;">
-            <label>Adresse complète d'installation</label>
-            <input type="text" class="form-control" id="sched-addr-${day}" placeholder="Ex: 12 Place de la Mairie" value="${s.address || ''}" onchange="updateDayAddress('${day}')">
-          </div>
-        </div>
-        <button type="button" class="btn-map-select" onclick="openLocationPickerModal('${day}')" style="width: 100%; justify-content: center; margin-top: 0.25rem;">
-          🗺️ Positionner sur la carte
+      ${s.active && !hasSecondSlot ? `
+        <button type="button" onclick="addSecondSlot('${day}')" style="
+          width:100%;margin-top:0.75rem;
+          background:rgba(245,158,11,0.08);
+          border:1px dashed rgba(245,158,11,0.4);
+          color:var(--primary);font-weight:700;font-size:0.85rem;
+          padding:0.6rem;border-radius:0.6rem;cursor:pointer;
+          transition:background 0.2s;
+        " id="add-slot-btn-${day}"
+          onmouseover="this.style.background='rgba(245,158,11,0.15)'"
+          onmouseout="this.style.background='rgba(245,158,11,0.08)'">
+          ➕ Ajouter un 2ème service (soir / lieu B)
         </button>
-      </div>
+      ` : ''}
     `;
 
     container.appendChild(card);
   });
 }
 
+// ---- Gestion toggle jour ----
 window.toggleDayActive = async function(day) {
   if (!currentUser || currentUser === "admin") return;
-
-  const activeCheckbox = document.getElementById(`sched-active-${day}`);
-  const active = activeCheckbox.checked;
-
-  // Toggle CSS class
+  const active = document.getElementById(`sched-active-${day}`).checked;
   const card = document.getElementById(`schedule-card-${day}`);
   if (active) {
     card.classList.add("active");
@@ -991,116 +1251,128 @@ window.toggleDayActive = async function(day) {
     card.classList.remove("active");
     card.querySelector(".switch-label").innerText = "Fermé";
   }
-
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex !== -1) {
     vendors[vIndex].schedule[day].active = active;
-    
-    // Set default times if blank
-    if (active) {
-      if (!vendors[vIndex].schedule[day].openTime) vendors[vIndex].schedule[day].openTime = "11:30";
-      if (!vendors[vIndex].schedule[day].closeTime) vendors[vIndex].schedule[day].closeTime = "22:00";
+    if (active && !vendors[vIndex].schedule[day].slots[0].openTime) {
+      vendors[vIndex].schedule[day].slots[0].openTime = "11:30";
+      vendors[vIndex].schedule[day].slots[0].closeTime = "14:30";
     }
-
     currentUser = vendors[vIndex];
     await saveVendors();
+    renderVendorScheduleList();
   }
 };
 
-window.updateDayTimes = async function(day) {
-  const openTime = document.getElementById(`sched-open-${day}`).value;
-  const closeTime = document.getElementById(`sched-close-${day}`).value;
-
+// ---- Mise à jour horaires par slot ----
+window.updateSlotTimes = async function(day, slotIndex) {
+  const openTime  = document.getElementById(`sched-open-${day}-${slotIndex}`).value;
+  const closeTime = document.getElementById(`sched-close-${day}-${slotIndex}`).value;
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex !== -1) {
-    vendors[vIndex].schedule[day].openTime = openTime;
-    vendors[vIndex].schedule[day].closeTime = closeTime;
+    vendors[vIndex].schedule[day].slots[slotIndex].openTime  = openTime;
+    vendors[vIndex].schedule[day].slots[slotIndex].closeTime = closeTime;
     currentUser = vendors[vIndex];
     await saveVendors();
   }
 };
 
-window.updateDayCity = async function(day) {
-  const city = document.getElementById(`sched-city-${day}`).value.trim();
-
+window.updateSlotCity = async function(day, slotIndex) {
+  const city = document.getElementById(`sched-city-${day}-${slotIndex}`).value.trim();
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex !== -1) {
-    vendors[vIndex].schedule[day].city = city;
+    vendors[vIndex].schedule[day].slots[slotIndex].city = city;
     currentUser = vendors[vIndex];
     await saveVendors();
   }
 };
 
-window.updateDayAddress = async function(day) {
-  const addr = document.getElementById(`sched-addr-${day}`).value.trim();
-
+window.updateSlotAddress = async function(day, slotIndex) {
+  const addr = document.getElementById(`sched-addr-${day}-${slotIndex}`).value.trim();
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex !== -1) {
-    vendors[vIndex].schedule[day].address = addr;
+    vendors[vIndex].schedule[day].slots[slotIndex].address = addr;
     currentUser = vendors[vIndex];
     await saveVendors();
   }
 };
 
-// Location Picker Modal triggers
-window.openLocationPickerModal = function(day) {
-  activeModalDay = day;
-  
-  const sched = currentUser.schedule[day];
+// ---- Ajouter / supprimer le 2ème slot ----
+window.addSecondSlot = async function(day) {
+  const vIndex = vendors.findIndex(v => v.id === currentUser.id);
+  if (vIndex === -1) return;
+  if (vendors[vIndex].schedule[day].slots.length >= 2) return;
+  vendors[vIndex].schedule[day].slots.push({ ...makeEmptySlot(), openTime: "18:00", closeTime: "23:00" });
+  currentUser = vendors[vIndex];
+  await saveVendors();
+  renderVendorScheduleList();
+  showToast("2ème service ajouté !");
+};
+
+window.removeSecondSlot = async function(day) {
+  const vIndex = vendors.findIndex(v => v.id === currentUser.id);
+  if (vIndex === -1) return;
+  vendors[vIndex].schedule[day].slots = [vendors[vIndex].schedule[day].slots[0]];
+  currentUser = vendors[vIndex];
+  await saveVendors();
+  renderVendorScheduleList();
+  showToast("2ème service supprimé.");
+};
+
+// ---- Modal positionnement carte (avec support slot index) ----
+let activeModalSlotIndex = 0;
+
+window.openLocationPickerModalSlot = function(day, slotIndex) {
+  activeModalDay       = day;
+  activeModalSlotIndex = slotIndex;
+
+  const slot    = (currentUser.schedule[day].slots || [])[slotIndex] || makeEmptySlot();
   const overlay = document.getElementById("location-picker-modal");
-  
-  // Set modal header text
-  document.getElementById("modal-day-name").innerText = day;
-  
-  // Show overlay
+  const label   = slotIndex === 1 ? `${day} — Service du soir (B)` : `${day} — Service du midi (A)`;
+  document.getElementById("modal-day-name").innerText = label;
   overlay.classList.add("active");
-  
-  // Load Leaflet map
+
   setTimeout(() => {
     initModalMap();
     modalMap.invalidateSize();
-    
-    // If day has existing coordinates, center there. Otherwise center France or vendor other day
-    if (sched && sched.lat && sched.lng) {
-      modalMap.setView([sched.lat, sched.lng], 15);
-      updateModalMarker(sched.lat, sched.lng);
-      document.getElementById("modal-address").value = sched.address || "";
-      document.getElementById("modal-city").value = sched.city || "";
+    if (slot.lat && slot.lng) {
+      modalMap.setView([slot.lat, slot.lng], 15);
+      updateModalMarker(slot.lat, slot.lng);
+      document.getElementById("modal-address").value = slot.address || "";
+      document.getElementById("modal-city").value    = slot.city    || "";
     } else {
-      // Find another active day of this vendor to center nearby
-      let fallbackCoords = [46.2276, 2.2137]; // Center France
-      let fallbackZoom = 6;
+      let fallbackCoords = [46.2276, 2.2137];
+      let fallbackZoom   = 6;
       for (const d of DAYS_OF_WEEK) {
-        if (currentUser.schedule[d] && currentUser.schedule[d].lat) {
-          fallbackCoords = [currentUser.schedule[d].lat, currentUser.schedule[d].lng];
-          fallbackZoom = 14;
-          break;
-        }
+        const s0 = (currentUser.schedule[d]?.slots || [])[0];
+        if (s0?.lat) { fallbackCoords = [s0.lat, s0.lng]; fallbackZoom = 14; break; }
       }
       modalMap.setView(fallbackCoords, fallbackZoom);
-      if (modalMarker) {
-        modalMap.removeLayer(modalMarker);
-        modalMarker = null;
-      }
-      document.getElementById("modal-lat").value = "";
-      document.getElementById("modal-lng").value = "";
+      if (modalMarker) { modalMap.removeLayer(modalMarker); modalMarker = null; }
+      document.getElementById("modal-lat").value     = "";
+      document.getElementById("modal-lng").value     = "";
       document.getElementById("modal-address").value = "";
-      document.getElementById("modal-city").value = "";
+      document.getElementById("modal-city").value    = "";
     }
   }, 100);
 };
 
-window.closeLocationModal = function() {
-  document.getElementById("location-picker-modal").classList.remove("active");
-  activeModalDay = null;
+// Garde la compatibilité avec l'ancien appel sans slotIndex
+window.openLocationPickerModal = function(day) {
+  window.openLocationPickerModalSlot(day, 0);
 };
 
-// Save coordinate confirmation from Modal Picker
+window.closeLocationModal = function() {
+  document.getElementById("location-picker-modal").classList.remove("active");
+  activeModalDay       = null;
+  activeModalSlotIndex = 0;
+};
+
+// Confirmation position depuis modal
 window.confirmModalLocation = async function() {
   if (!activeModalDay || !currentUser) return;
-
-  const latVal = parseFloat(document.getElementById("modal-lat").value);
-  const lngVal = parseFloat(document.getElementById("modal-lng").value);
+  const latVal  = parseFloat(document.getElementById("modal-lat").value);
+  const lngVal  = parseFloat(document.getElementById("modal-lng").value);
   const addrVal = document.getElementById("modal-address").value.trim();
   const cityVal = document.getElementById("modal-city").value.trim();
 
@@ -1111,19 +1383,19 @@ window.confirmModalLocation = async function() {
 
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex !== -1) {
-    vendors[vIndex].schedule[activeModalDay].lat = latVal;
-    vendors[vIndex].schedule[activeModalDay].lng = lngVal;
-    vendors[vIndex].schedule[activeModalDay].address = addrVal;
-    vendors[vIndex].schedule[activeModalDay].city = cityVal;
-    
+    const slot = vendors[vIndex].schedule[activeModalDay].slots[activeModalSlotIndex];
+    slot.lat     = latVal;
+    slot.lng     = lngVal;
+    slot.address = addrVal;
+    slot.city    = cityVal;
     currentUser = vendors[vIndex];
     await saveVendors();
-
-    // Update screen DOM values
-    document.getElementById(`sched-addr-${activeModalDay}`).value = addrVal;
-    document.getElementById(`sched-city-${activeModalDay}`).value = cityVal;
-    
-    showToast(`Position enregistrée pour ${activeModalDay} !`);
+    // Mise à jour champs DOM
+    const addrEl = document.getElementById(`sched-addr-${activeModalDay}-${activeModalSlotIndex}`);
+    const cityEl = document.getElementById(`sched-city-${activeModalDay}-${activeModalSlotIndex}`);
+    if (addrEl) addrEl.value = addrVal;
+    if (cityEl) cityEl.value = cityVal;
+    showToast(`Position enregistrée — ${activeModalDay} (service ${activeModalSlotIndex + 1}) !`);
     closeLocationModal();
   }
 };
