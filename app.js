@@ -356,7 +356,7 @@ function renderClientResults() {
       .addTo(clientMap);
     
     // Popup template
-    const slotLabel = item.slotIndex === 1 ? '🌙 Soir' : '☀️ Midi';
+    const slotLabel = item.slotIndex === 1 ? 'Service 2' : 'Service 1';
     const popupContent = `
       <div class="popup-container">
         <div class="popup-title">${vendor.name}</div>
@@ -585,7 +585,7 @@ window.openTruckDetailModal = function(vendorId) {
         const t = slot.openTime && slot.closeTime ? `${slot.openTime} – ${slot.closeTime}` : "—";
         const loc = [slot.city, slot.address].filter(Boolean).join(", ");
         return `<div style="text-align:right;${i > 0 ? 'margin-top:0.35rem;padding-top:0.35rem;border-top:1px dashed rgba(255,255,255,0.08);' : ''}">
-          ${slots.length > 1 ? `<span style="font-size:0.7rem;color:var(--primary);font-weight:700;">${i === 0 ? '☀️ Midi' : '🌙 Soir'} </span>` : ''}
+          ${slots.length > 1 ? `<span style="font-size:0.7rem;color:var(--primary);font-weight:700;">Service ${i+1} </span>` : ''}
           <span style="font-weight:600;">${t}</span>
           ${loc ? `<span style="display:block;font-size:0.75rem;color:var(--text-muted);max-width:160px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" title="${loc}">📍 ${loc}</span>` : ''}
         </div>`;
@@ -1144,7 +1144,9 @@ function renderSlotHTML(day, slotIndex, slot) {
       padding: 1rem;
       margin-top: ${isSecond ? '0.75rem' : '0'};
     ">
-      ${isSecond ? `<div style="font-size:0.78rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">🌙 Service du soir — Emplacement B</div>` : `<div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">☀️ Service du midi — Emplacement A</div>`}
+      <div style="font-size:0.78rem;font-weight:700;color:${isSecond ? 'var(--primary)' : 'var(--text-muted)'};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">
+        ${isSecond ? '🌙 Service 2' : '☀️ Service 1'}
+      </div>
       <div class="day-schedule-details">
         <div class="form-group">
           <label>Heure d'ouverture</label>
@@ -1195,8 +1197,12 @@ function renderVendorScheduleList() {
   container.innerHTML = "";
 
   DAYS_OF_WEEK.forEach(day => {
-    const s = currentUser.schedule[day] || { active: false, slots: [makeEmptySlot()] };
-    const slots = s.slots || [makeEmptySlot()];
+    let s = currentUser.schedule[day] || { active: false, slots: [makeEmptySlot()] };
+    // Auto-migration format ancien → nouveau
+    if (!Array.isArray(s.slots)) {
+      s.slots = [{ city: s.city||"", address: s.address||"", lat: s.lat||0, lng: s.lng||0, openTime: s.openTime||"", closeTime: s.closeTime||"" }];
+    }
+    const slots = s.slots;
 
     const card = document.createElement("div");
     card.className = `day-schedule-card ${s.active ? 'active' : ''}`;
@@ -1230,7 +1236,7 @@ function renderVendorScheduleList() {
         " id="add-slot-btn-${day}"
           onmouseover="this.style.background='rgba(245,158,11,0.15)'"
           onmouseout="this.style.background='rgba(245,158,11,0.08)'">
-          ➕ Ajouter un 2ème service (soir / lieu B)
+          ➕ Ajouter un 2ème service
         </button>
       ` : ''}
     `;
@@ -1241,53 +1247,39 @@ function renderVendorScheduleList() {
 
 
 // ==========================================================================
-// DÉLÉGATION D'ÉVÉNEMENTS GLOBALE — couvre tout le HTML dynamique
+// DÉLÉGATION D'ÉVÉNEMENTS GLOBALE
 // ==========================================================================
 
-// --- Clicks ---
-document.addEventListener("click", function(e) {
-  const el     = e.target.closest("[data-action]");
+function _delegate(e, eventType) {
+  const el = e.target.closest("[data-action]");
   if (!el) return;
+  const a  = el.dataset.action;
+  const d  = el.dataset.day;
+  const s  = parseInt(el.dataset.slot  ?? "0");
+  const v  = el.dataset.vendor;
+  const i  = el.dataset.item;
 
-  const action   = el.dataset.action;
-  const day      = el.dataset.day;
-  const slotIdx  = parseInt(el.dataset.slot  ?? "0");
-  const vendorId = el.dataset.vendor;
-  const itemId   = el.dataset.item;
-
-  switch (action) {
-    // Planning slots
-    case "add-slot":      if (day) window.addSecondSlot(day);                          break;
-    case "remove-slot":   if (day) window.removeSecondSlot(day);                       break;
-    case "open-map":      if (day) window.openLocationPickerModalSlot(day, slotIdx);   break;
-    // Admin
-    case "save-phone":    if (vendorId) window.saveAdminPhone(vendorId);               break;
-    case "delete-vendor": if (vendorId) window.deleteVendor(vendorId);                 break;
-    // Menu
-    case "delete-menu":   if (itemId)   window.deleteMenuItem(itemId);                 break;
-    // Client
-    case "open-detail":   if (vendorId) window.openTruckDetailModal(vendorId);         break;
-    // Auth
-    case "logout":        window.logout();                                              break;
+  if (eventType === "click") {
+    if (a === "add-slot"      && d) { addSecondSlot(d);                    return; }
+    if (a === "remove-slot"   && d) { removeSecondSlot(d);                 return; }
+    if (a === "open-map"      && d) { openLocationPickerModalSlot(d, s);   return; }
+    if (a === "save-phone"    && v) { saveAdminPhone(v);                   return; }
+    if (a === "delete-vendor" && v) { deleteVendor(v);                     return; }
+    if (a === "delete-menu"   && i) { deleteMenuItem(i);                   return; }
+    if (a === "open-detail"   && v) { openTruckDetailModal(v);             return; }
+    if (a === "logout")             { logout();                            return; }
   }
-});
 
-// --- Changes (inputs/selects dans le planning) ---
-document.addEventListener("change", function(e) {
-  const el      = e.target.closest("[data-action]");
-  if (!el) return;
-
-  const action  = el.dataset.action;
-  const day     = el.dataset.day;
-  const slotIdx = parseInt(el.dataset.slot ?? "0");
-
-  switch (action) {
-    case "toggle-day": if (day) window.toggleDayActive(day);           break;
-    case "slot-time":  if (day) window.updateSlotTimes(day, slotIdx);  break;
-    case "slot-city":  if (day) window.updateSlotCity(day, slotIdx);   break;
-    case "slot-addr":  if (day) window.updateSlotAddress(day, slotIdx);break;
+  if (eventType === "change") {
+    if (a === "toggle-day" && d) { toggleDayActive(d);            return; }
+    if (a === "slot-time"  && d) { updateSlotTimes(d, s);         return; }
+    if (a === "slot-city"  && d) { updateSlotCity(d, s);          return; }
+    if (a === "slot-addr"  && d) { updateSlotAddress(d, s);       return; }
   }
-});
+}
+
+document.addEventListener("click",  e => _delegate(e, "click"));
+document.addEventListener("change", e => _delegate(e, "change"));
 
 // ---- Gestion toggle jour ----
 window.toggleDayActive = async function(day) {
@@ -1303,10 +1295,15 @@ window.toggleDayActive = async function(day) {
   }
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex !== -1) {
-    vendors[vIndex].schedule[day].active = active;
-    if (active && !vendors[vIndex].schedule[day].slots[0].openTime) {
-      vendors[vIndex].schedule[day].slots[0].openTime = "11:30";
-      vendors[vIndex].schedule[day].slots[0].closeTime = "14:30";
+    const sched = vendors[vIndex].schedule[day];
+    sched.active = active;
+    // Auto-migration si slots[] absent
+    if (!Array.isArray(sched.slots)) {
+      sched.slots = [{ city: sched.city||"", address: sched.address||"", lat: sched.lat||0, lng: sched.lng||0, openTime: sched.openTime||"", closeTime: sched.closeTime||"" }];
+    }
+    if (active && !sched.slots[0].openTime) {
+      sched.slots[0].openTime  = "11:30";
+      sched.slots[0].closeTime = "14:30";
     }
     currentUser = vendors[vIndex];
     await saveVendors();
@@ -1316,10 +1313,10 @@ window.toggleDayActive = async function(day) {
 
 // ---- Mise à jour horaires par slot ----
 window.updateSlotTimes = async function(day, slotIndex) {
-  const openTime  = document.getElementById(`sched-open-${day}-${slotIndex}`).value;
-  const closeTime = document.getElementById(`sched-close-${day}-${slotIndex}`).value;
+  const openTime  = document.getElementById(`sched-open-${day}-${slotIndex}`)?.value;
+  const closeTime = document.getElementById(`sched-close-${day}-${slotIndex}`)?.value;
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
-  if (vIndex !== -1) {
+  if (vIndex !== -1 && Array.isArray(vendors[vIndex].schedule[day]?.slots)) {
     vendors[vIndex].schedule[day].slots[slotIndex].openTime  = openTime;
     vendors[vIndex].schedule[day].slots[slotIndex].closeTime = closeTime;
     currentUser = vendors[vIndex];
@@ -1351,8 +1348,13 @@ window.updateSlotAddress = async function(day, slotIndex) {
 window.addSecondSlot = async function(day) {
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex === -1) return;
-  if (vendors[vIndex].schedule[day].slots.length >= 2) return;
-  vendors[vIndex].schedule[day].slots.push({ ...makeEmptySlot(), openTime: "18:00", closeTime: "23:00" });
+  // Auto-migration si slots[] absent (ancien format Firestore)
+  const sched = vendors[vIndex].schedule[day];
+  if (!Array.isArray(sched.slots)) {
+    sched.slots = [{ city: sched.city||"", address: sched.address||"", lat: sched.lat||0, lng: sched.lng||0, openTime: sched.openTime||"", closeTime: sched.closeTime||"" }];
+  }
+  if (sched.slots.length >= 2) return;
+  sched.slots.push({ ...makeEmptySlot(), openTime: "18:00", closeTime: "23:00" });
   currentUser = vendors[vIndex];
   await saveVendors();
   renderVendorScheduleList();
@@ -1362,7 +1364,9 @@ window.addSecondSlot = async function(day) {
 window.removeSecondSlot = async function(day) {
   const vIndex = vendors.findIndex(v => v.id === currentUser.id);
   if (vIndex === -1) return;
-  vendors[vIndex].schedule[day].slots = [vendors[vIndex].schedule[day].slots[0]];
+  const sched = vendors[vIndex].schedule[day];
+  if (!Array.isArray(sched.slots)) return;
+  sched.slots = [sched.slots[0]];
   currentUser = vendors[vIndex];
   await saveVendors();
   renderVendorScheduleList();
@@ -1376,9 +1380,11 @@ window.openLocationPickerModalSlot = function(day, slotIndex) {
   activeModalDay       = day;
   activeModalSlotIndex = slotIndex;
 
-  const slot    = (currentUser.schedule[day].slots || [])[slotIndex] || makeEmptySlot();
+  const dayData = currentUser.schedule[day] || {};
+  const slotArr = Array.isArray(dayData.slots) ? dayData.slots : [{ city: dayData.city||"", address: dayData.address||"", lat: dayData.lat||0, lng: dayData.lng||0, openTime: dayData.openTime||"", closeTime: dayData.closeTime||"" }];
+  const slot    = slotArr[slotIndex] || makeEmptySlot();
   const overlay = document.getElementById("location-picker-modal");
-  const label   = slotIndex === 1 ? `${day} — Service du soir (B)` : `${day} — Service du midi (A)`;
+  const label   = slotIndex === 1 ? `${day} — Service 2` : `${day} — Service 1`;
   document.getElementById("modal-day-name").innerText = label;
   overlay.classList.add("active");
 
