@@ -1804,6 +1804,54 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("vendor-menu-form").addEventListener("submit", handleAddMenuItem);
   document.getElementById("admin-create-form").addEventListener("submit", handleCreateVendor);
 
+  // ---- Modal statique — boutons câblés ici (ES module ne supporte pas onclick inline) ----
+  const btnConfirm  = document.querySelector("#location-picker-modal .btn-primary[onclick]") ||
+                      document.getElementById("modal-confirm-btn");
+  const btnCancel   = document.querySelector("#location-picker-modal .btn-secondary[onclick]") ||
+                      document.getElementById("modal-cancel-btn");
+  const btnSearch   = document.querySelector("#location-picker-modal .btn-primary:not([data-action])") ||
+                      document.getElementById("modal-search-btn");
+  const btnClose    = document.querySelector("#location-picker-modal .modal-close");
+
+  // Attache via querySelectorAll pour être robuste quelle que soit la structure
+  document.querySelectorAll("#location-picker-modal button").forEach(btn => {
+    const txt = btn.textContent.trim();
+    const oc  = btn.getAttribute("onclick") || "";
+    if (oc.includes("confirmModalLocation") || txt === "Confirmer la position") {
+      btn.removeAttribute("onclick");
+      btn.addEventListener("click", () => confirmModalLocation());
+    }
+    if (oc.includes("closeLocationModal") || txt === "Annuler") {
+      btn.removeAttribute("onclick");
+      btn.addEventListener("click", () => closeLocationModal());
+    }
+    if (oc.includes("searchModalAddress") || txt === "Rechercher") {
+      btn.removeAttribute("onclick");
+      btn.addEventListener("click", () => searchModalAddress());
+    }
+  });
+  document.querySelectorAll("#location-picker-modal .modal-close").forEach(btn => {
+    btn.removeAttribute("onclick");
+    btn.addEventListener("click", () => closeLocationModal());
+  });
+
+  // Touche Entrée dans le champ de recherche modal
+  const modalSearchInput = document.getElementById("modal-search-input");
+  if (modalSearchInput) {
+    modalSearchInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); searchModalAddress(); }
+    });
+  }
+
+  // ---- Detail modal close ----
+  document.querySelectorAll("#detail-modal .modal-close, #detail-modal .btn-primary").forEach(btn => {
+    const oc = btn.getAttribute("onclick") || "";
+    if (oc.includes("closeDetailModal") || btn.textContent.trim() === "Fermer") {
+      btn.removeAttribute("onclick");
+      btn.addEventListener("click", () => closeDetailModal());
+    }
+  });
+
   // Range Slider text feedback
   const rangeSlider = document.getElementById("distance-slider");
   const distanceValue = document.getElementById("distance-value");
